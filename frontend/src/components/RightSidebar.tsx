@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { Post, User } from '@/lib/api';
+import { FollowButton } from '@/components/FollowButton';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface RightSidebarProps {
   staffPicks: Post[];
@@ -48,7 +50,17 @@ function TopicPill({ name }: { name: string }) {
   );
 }
 
-export function RightSidebar({ staffPicks, whoToFollow, recommendedTopics }: RightSidebarProps) {
+export function RightSidebar({ staffPicks, whoToFollow: initialWhoToFollow, recommendedTopics }: RightSidebarProps) {
+  const { isFollowing, isAuthenticated, user } = useAuth();
+  
+  // Filter out users we are already following
+  // This handles the case where SSR returns them because it was anonymous
+  const whoToFollow = initialWhoToFollow.filter(u => {
+    if (!isAuthenticated) return true;
+    if (u.id === user?.id) return false;
+    return !isFollowing(u.id);
+  });
+
   return (
     <aside className="hidden xl:block w-72 flex-shrink-0 border-l border-border">
       <div className="sticky top-14 p-6 h-[calc(100vh-56px)] overflow-y-auto">
@@ -114,14 +126,12 @@ export function RightSidebar({ staffPicks, whoToFollow, recommendedTopics }: Rig
                         </p>
                       )}
                     </div>
-                    <button className="px-3 py-1 text-xs font-medium border border-foreground rounded-full hover:bg-foreground hover:text-background transition-colors flex-shrink-0">
-                      Follow
-                    </button>
+                    <FollowButton userId={user.id} initialIsFollowing={false} />
                   </div>
                 );
               })
             ) : (
-              <p className="text-xs text-muted">No authors to suggest.</p>
+              <p className="text-xs text-muted">No suggestions available.</p>
             )}
           </div>
           <Link href="/writers" className="text-xs text-accent hover:underline mt-3 inline-block">

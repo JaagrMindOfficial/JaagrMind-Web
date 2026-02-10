@@ -25,3 +25,37 @@ export const getFollowing = asyncHandler(async (req: Request, res: Response) => 
   const result = await usersRepository.getFollowing(userId, page, limit);
   res.json({ success: true, ...result });
 });
+
+/**
+ * GET /api/users/me/following/ids - Get all following IDs for current user
+ */
+export const getMyFollowingIds = asyncHandler(async (req: Request, res: Response) => {
+  if (!req.user) {
+    res.json({ success: true, data: [] });
+    return;
+  }
+  const ids = await usersRepository.getAllFollowingIds(req.user.id);
+  res.json({ success: true, data: ids });
+});
+
+/**
+ * POST /api/users/:id/follow - Follow a user
+ */
+export const followUser = asyncHandler(async (req: Request, res: Response) => {
+  const followerId = req.user!.id;
+  const targetId = req.params.id;
+
+  await usersRepository.followUser(followerId, targetId);
+  res.json({ success: true });
+});
+
+/**
+ * DELETE /api/users/:id/follow - Unfollow a user
+ */
+export const unfollowUser = asyncHandler(async (req: Request, res: Response) => {
+  const followerId = req.user!.id;
+  const targetId = req.params.id;
+
+  await usersRepository.unfollowUser(followerId, targetId);
+  res.json({ success: true });
+});

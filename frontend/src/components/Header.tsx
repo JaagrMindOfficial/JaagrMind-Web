@@ -15,7 +15,7 @@ export function Header() {
     <header className="sticky top-0 z-50 bg-background border-b border-border">
       <div className="flex h-14">
         {/* Left: Logo Area */}
-        <div className="flex items-center justify-center lg:w-56 border-r border-border shrink-0">
+        <div className="flex items-center justify-center lg:w-64 border-r border-border shrink-0">
           <Link href="/" className="flex-shrink-0">
             <Logo variant="full" height={28} />
           </Link>

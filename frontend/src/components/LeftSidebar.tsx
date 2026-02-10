@@ -9,7 +9,6 @@ import {
   BookOpen, 
   User as UserIcon, 
   Compass,
-  Search,
   ChevronDown,
   ChevronUp
 } from 'lucide-react';
@@ -17,7 +16,7 @@ import { getFollowing, User } from '@/lib/api';
 
 export function LeftSidebar() {
   const pathname = usePathname();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, followingIds } = useAuth();
   const [following, setFollowing] = useState<User[]>([]);
   const [isFollowingExpanded, setIsFollowingExpanded] = useState(true);
 
@@ -27,7 +26,7 @@ export function LeftSidebar() {
         if (res.data) setFollowing(res.data);
       });
     }
-  }, [isAuthenticated]);
+  }, [followingIds, isAuthenticated]);
 
   // Base nav items (always visible)
   const baseNavItems = [
@@ -46,7 +45,7 @@ export function LeftSidebar() {
     : baseNavItems;
 
   return (
-    <aside className="flex flex-col h-[calc(100vh-56px)] sticky top-14 p-6 overflow-y-auto w-64">
+    <aside className="flex flex-col h-full p-6">
       {/* Main Navigation */}
       <nav className="space-y-1 mb-8">
         {navItems.map((item) => {
@@ -69,7 +68,7 @@ export function LeftSidebar() {
       </nav>
 
       {/* Following List (Authenticated) */}
-      {isAuthenticated && following.length > 0 && (
+      {isAuthenticated && (
         <div className="mb-8">
           <button 
             onClick={() => setIsFollowingExpanded(!isFollowingExpanded)}
@@ -81,29 +80,38 @@ export function LeftSidebar() {
           
           {isFollowingExpanded && (
             <div className="space-y-1">
-              {following.map((followedUser) => {
-                 const name = followedUser.profiles?.display_name || followedUser.profiles?.username || 'User';
-                 const username = followedUser.profiles?.username;
-                 return (
-                   <Link
-                     key={followedUser.id}
-                     href={`/@${username}`}
-                     className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-accent/5 transition-colors group"
-                   >
-                     <div className="w-5 h-5 rounded-full bg-accent/10 flex items-center justify-center overflow-hidden flex-shrink-0">
-                        {followedUser.profiles?.avatar_url ? (
-                          <img src={followedUser.profiles.avatar_url} alt={name} className="w-full h-full object-cover" />
-                        ) : (
-                          <span className="text-[9px] font-medium text-accent">{name[0]?.toUpperCase()}</span>
-                        )}
-                     </div>
-                     <span className="text-sm text-muted group-hover:text-foreground truncate">{name}</span>
-                   </Link>
-                 );
-              })}
-              <Link href="/following" className="block px-3 py-1.5 text-xs text-accent hover:underline mt-1">
-                View all
-              </Link>
+              {following.length === 0 ? (
+                <div className="px-3 py-2 text-xs text-muted">
+                  You are not following anyone
+                </div>
+              ) : (
+                <>
+                  {following.map((followedUser) => {
+                     const name = followedUser.profiles?.display_name || followedUser.profiles?.username || 'User';
+                     const username = followedUser.profiles?.username;
+                     return (
+                       <Link
+                         key={followedUser.id}
+                         href={`/@${username}`}
+                         className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-accent/5 transition-colors group"
+                       >
+                         <div className="w-5 h-5 rounded-full bg-accent/10 flex items-center justify-center overflow-hidden flex-shrink-0">
+                            {followedUser.profiles?.avatar_url ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img src={followedUser.profiles.avatar_url} alt={name} className="w-full h-full object-cover" />
+                            ) : (
+                              <span className="text-[9px] font-medium text-accent">{name[0]?.toUpperCase()}</span>
+                            )}
+                         </div>
+                         <span className="text-sm text-muted group-hover:text-foreground truncate">{name}</span>
+                       </Link>
+                     );
+                  })}
+                  <Link href="/following" className="block px-3 py-1.5 text-xs text-accent hover:underline mt-1">
+                    View all
+                  </Link>
+                </>
+              )}
             </div>
           )}
         </div>

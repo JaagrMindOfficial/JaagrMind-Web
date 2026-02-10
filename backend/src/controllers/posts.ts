@@ -20,6 +20,20 @@ export const getPosts = asyncHandler(async (req: Request, res: Response) => {
     topicSlug,
   });
 
+  // Inject is_following status if user is authenticated
+  if (req.user) {
+    const posts = result.data;
+    await Promise.all(posts.map(async (post) => {
+      if (post.author_id && req.user!.id !== post.author_id) {
+        const isFollowing = await usersRepository.isFollowing(req.user!.id, post.author_id);
+        if (post.author) {
+          // @ts-ignore
+          post.author.is_following = isFollowing;
+        }
+      }
+    }));
+  }
+
   res.json({ success: true, ...result });
 });
 
@@ -29,8 +43,29 @@ export const getPosts = asyncHandler(async (req: Request, res: Response) => {
 export const getStaffPicks = asyncHandler(async (req: Request, res: Response) => {
   const limit = Math.min(parseInt(req.query.limit as string) || 3, 10);
   const posts = await postsRepo.getStaffPicks(limit);
+
+  // Inject is_following status if user is authenticated
+  if (req.user) {
+    await Promise.all(posts.map(async (post) => {
+      if (post.author_id && req.user!.id !== post.author_id) {
+        const isFollowing = await usersRepository.isFollowing(req.user!.id, post.author_id);
+        if (post.author) {
+          // @ts-ignore
+          post.author.is_following = isFollowing;
+        }
+      }
+    }));
+  }
+
   res.json({ success: true, data: posts });
 });
+
+/**
+ * GET /api/posts/:slug - Get single post
+ */
+import { usersRepository } from '../repositories/users.js';
+
+// ...
 
 /**
  * GET /api/posts/:slug - Get single post
@@ -42,6 +77,15 @@ export const getPost = asyncHandler(async (req: Request, res: Response) => {
   if (!post) {
     res.status(404).json({ success: false, error: 'Post not found' });
     return;
+  }
+
+  // Check if current user is following the author
+  if (req.user && post.author_id && req.user.id !== post.author_id) {
+    const isFollowing = await usersRepository.isFollowing(req.user.id, post.author_id);
+    if (post.author) {
+      // @ts-ignore
+      post.author.is_following = isFollowing;
+    }
   }
 
   // Record view
@@ -62,6 +106,15 @@ export const getPostByAuthor = asyncHandler(async (req: Request, res: Response) 
   if (!post) {
     res.status(404).json({ success: false, error: 'Post not found' });
     return;
+  }
+
+  // Check if current user is following the author
+  if (req.user && post.author_id && req.user.id !== post.author_id) {
+     const isFollowing = await usersRepository.isFollowing(req.user.id, post.author_id);
+     if (post.author) {
+       // @ts-ignore
+       post.author.is_following = isFollowing;
+     }
   }
 
   // Record view

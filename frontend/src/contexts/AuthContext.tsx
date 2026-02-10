@@ -11,6 +11,9 @@ interface AuthContextType {
   signup: (email: string, password: string, username: string, displayName?: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  followingIds: Set<string>;
+  isFollowing: (userId: string) => boolean;
+  updateFollowing: (userId: string, isFollowing: boolean) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -28,10 +31,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       const userData = await getCurrentUser();
       setUser(userData);
+      
+      // Fetch following IDs
+      if (userData) {
+        const ids = await import('@/lib/api').then(m => m.getMyFollowingIds());
+        setFollowingIds(new Set(ids));
+      }
     } catch {
       setUser(null);
+      setFollowingIds(new Set());
       clearTokens();
     }
+  }, []);
+
+  const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
+
+  const isFollowing = useCallback((userId: string) => {
+      return followingIds.has(userId);
+  }, [followingIds]);
+
+  const updateFollowing = useCallback((userId: string, status: boolean) => {
+      setFollowingIds(prev => {
+          const next = new Set(prev);
+          if (status) next.add(userId);
+          else next.delete(userId);
+          return next;
+      });
   }, []);
 
   useEffect(() => {
@@ -45,7 +70,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           return;
         }
         const userData = await getCurrentUser();
-        if (isMounted) setUser(userData);
+        if (isMounted) {
+            setUser(userData);
+            if (userData) {
+                const ids = await import('@/lib/api').then(m => m.getMyFollowingIds());
+                if (isMounted) setFollowingIds(new Set(ids));
+            }
+        }
       } catch {
         if (isMounted) {
           setUser(null);
@@ -82,7 +113,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     await apiLogout();
+    await apiLogout();
     setUser(null);
+    setFollowingIds(new Set());
   };
 
   return (
@@ -95,6 +128,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         signup,
         logout,
         refreshUser,
+        followingIds,
+        isFollowing,
+        updateFollowing,
       }}
     >
       {children}

@@ -12,5 +12,10 @@ router.get('/who-to-follow', usersController.getWhoToFollow);
 
 // Users followed by current user
 router.get('/following', usersController.getFollowing);
+router.get('/me/following/ids', usersController.getMyFollowingIds);
+
+// Follow/Unfollow
+router.post('/:id/follow', usersController.followUser);
+router.delete('/:id/follow', usersController.unfollowUser);
 
 export default router;

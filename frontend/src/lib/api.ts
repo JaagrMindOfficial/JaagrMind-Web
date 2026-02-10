@@ -12,6 +12,7 @@ export interface User {
   profiles?: Profile;
   can_delete_own_comments?: boolean;
   can_delete_others_comments?: boolean;
+  is_following?: boolean;
 }
 
 export interface Profile {
@@ -268,6 +269,21 @@ export async function getFollowing(page = 1, limit = 10): Promise<PaginatedRespo
   });
   const result = await apiFetch<PaginatedResponse<User>>(`/users/following?${params}`);
   return result as unknown as PaginatedResponse<User>;
+}
+
+export async function getMyFollowingIds(): Promise<string[]> {
+  const result = await apiFetch<string[]>('/users/me/following/ids');
+  return result.success ? result.data || [] : [];
+}
+
+export async function followUser(userId: string): Promise<void> {
+  const result = await apiFetch(`/users/${userId}/follow`, { method: 'POST' });
+  if (!result.success) throw new Error(result.error || 'Failed to follow user');
+}
+
+export async function unfollowUser(userId: string): Promise<void> {
+  const result = await apiFetch(`/users/${userId}/follow`, { method: 'DELETE' });
+  if (!result.success) throw new Error(result.error || 'Failed to unfollow user');
 }
 
 export async function getPostBySlug(slug: string): Promise<Post | null> {
