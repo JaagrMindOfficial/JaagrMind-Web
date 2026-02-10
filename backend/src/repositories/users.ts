@@ -227,10 +227,10 @@ export const usersRepository = {
     // Use admin client to bypass RLS, since we handle auth in the controller
     const { data: existing } = await supabaseAdmin
       .from('follows')
-      .select('id')
+      .select('follower_id')
       .eq('follower_id', followerId)
       .eq('following_id', followingId)
-      .single();
+      .maybeSingle();
 
     if (existing) return; // Idempotent
 
@@ -262,10 +262,10 @@ export const usersRepository = {
     // Use admin client to bypass RLS
     const { data, error } = await supabaseAdmin
       .from('follows')
-      .select('id')
+      .select('follower_id')
       .eq('follower_id', followerId)
       .eq('following_id', targetId)
-      .single();
+      .maybeSingle();
       
     if (error && error.code !== 'PGRST116') throw error; // PGRST116 is "not found"
     

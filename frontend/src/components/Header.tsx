@@ -1,5 +1,6 @@
 'use client';
 
+// Header component
 import Link from 'next/link';
 import { useState } from 'react';
 import { ThemeToggle } from './ThemeToggle';

@@ -16,6 +16,7 @@ import publicationsRoutes from './routes/publications.js';
 import mediaRoutes from './routes/media.js';
 import topicsRoutes from './routes/topics.js';
 import usersRoutes from './routes/users.js';
+import libraryRoutes from './routes/library.js';
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -47,6 +48,7 @@ app.use('/api/profiles', profilesRoutes);
 app.use('/api/publications', publicationsRoutes);
 app.use('/api/topics', topicsRoutes);
 app.use('/api/users', usersRoutes);
+app.use('/api/library', libraryRoutes);
 
 // Error handling
 app.use(notFound);

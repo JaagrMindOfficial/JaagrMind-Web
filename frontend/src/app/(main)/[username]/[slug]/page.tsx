@@ -1,13 +1,15 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { format } from 'date-fns';
-import { Bookmark, MessageCircle, MoreHorizontal } from 'lucide-react';
+import { MessageCircle, MoreHorizontal } from 'lucide-react';
 import { getPostByUsernameAndSlug, renderContent } from '@/lib/api';
 import { ClapsButton } from '@/components/ClapsButton';
 import { ShareButton } from '@/components/ShareButton';
 import { CommentsSection } from '@/components/CommentsSection';
 import { ReadingTracker } from '@/components/ReadingTracker';
 import { FollowButton } from '@/components/FollowButton';
+import { SaveButton } from '@/components/SaveButton';
+import { cookies } from 'next/headers';
 
 interface Props {
   params: Promise<{ username: string; slug: string }>;
@@ -52,12 +54,10 @@ export default async function BlogPostPage({ params }: Props) {
   const { username, slug } = await params;
   const decodedUsername = decodeURIComponent(username);
   
-  const post = await getPostByUsernameAndSlug(decodedUsername, slug);
-  console.log('[PostPage] Stats:', { 
-    id: post?.id, 
-    claps: post?.clap_count, 
-    comments: post?.comment_count 
-  });
+  const cookieStore = await cookies();
+  const token = cookieStore.get('accessToken')?.value;
+
+  const post = await getPostByUsernameAndSlug(decodedUsername, slug, token);
 
   if (!post) {
     notFound();
@@ -136,9 +136,11 @@ export default async function BlogPostPage({ params }: Props) {
               </a>
             </div>
             <div className="flex items-center gap-2">
-              <button className="p-1.5 hover:bg-accent/10 rounded-full transition-colors">
-                <Bookmark className="w-5 h-5 text-muted" />
-              </button>
+              <SaveButton 
+                postId={post.id} 
+                initialIsSaved={post.is_saved} 
+                className="p-1.5 hover:bg-accent/10 rounded-full"
+              />
               <ShareButton url={`/@${decodedUsername.replace('@', '')}/${post.slug}`} title={post.title} />
               <button className="p-1.5 hover:bg-accent/10 rounded-full transition-colors">
                 <MoreHorizontal className="w-5 h-5 text-muted" />

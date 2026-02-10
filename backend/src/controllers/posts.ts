@@ -18,6 +18,7 @@ export const getPosts = asyncHandler(async (req: Request, res: Response) => {
     status: 'published',
     topicId,
     topicSlug,
+    viewerId: req.user?.id
   });
 
   // Inject is_following status if user is authenticated
@@ -42,7 +43,7 @@ export const getPosts = asyncHandler(async (req: Request, res: Response) => {
  */
 export const getStaffPicks = asyncHandler(async (req: Request, res: Response) => {
   const limit = Math.min(parseInt(req.query.limit as string) || 3, 10);
-  const posts = await postsRepo.getStaffPicks(limit);
+  const posts = await postsRepo.getStaffPicks(limit, req.user?.id);
 
   // Inject is_following status if user is authenticated
   if (req.user) {
@@ -72,7 +73,7 @@ import { usersRepository } from '../repositories/users.js';
  */
 export const getPost = asyncHandler(async (req: Request, res: Response) => {
   const { slug } = req.params;
-  const post = await postsRepo.getPostBySlug(slug);
+  const post = await postsRepo.getPostBySlug(slug, req.user?.id);
 
   if (!post) {
     res.status(404).json({ success: false, error: 'Post not found' });
@@ -101,7 +102,7 @@ export const getPost = asyncHandler(async (req: Request, res: Response) => {
  */
 export const getPostByAuthor = asyncHandler(async (req: Request, res: Response) => {
   const { username, slug } = req.params;
-  const post = await postsRepo.getPostByUsernameAndSlug(username, slug);
+  const post = await postsRepo.getPostByUsernameAndSlug(username, slug, req.user?.id);
 
   if (!post) {
     res.status(404).json({ success: false, error: 'Post not found' });

@@ -1,7 +1,10 @@
+'use client';
+
 import Link from 'next/link';
 import { format } from 'date-fns';
-import { BookmarkPlus, MoreHorizontal, ThumbsUp, MessageCircle } from 'lucide-react';
+import { MoreHorizontal, ThumbsUp, MessageCircle } from 'lucide-react';
 import { Post } from '@/lib/api';
+import { SaveButton } from '@/components/SaveButton';
 
 // Get image URL helper (for S3 URLs)
 function getImageUrl(imageUrl?: string | null): string | null {
@@ -10,6 +13,7 @@ function getImageUrl(imageUrl?: string | null): string | null {
 }
 
 export function ArticleCard({ post }: { post: Post }) {
+
   const coverImageUrl = getImageUrl(post.cover_url);
   const authorAvatarUrl = getImageUrl(post.author?.profiles?.avatar_url);
   const authorName = post.author?.profiles?.display_name || post.author?.profiles?.username || 'JaagrMind';
@@ -19,8 +23,6 @@ export function ArticleCard({ post }: { post: Post }) {
   
   // Use first topic if available
   const topic = post.topics?.[0];
-
-
 
   // Use real stats (or 0 if not available)
   const claps = post.clap_count || 0;
@@ -40,7 +42,7 @@ export function ArticleCard({ post }: { post: Post }) {
                     <img src={authorAvatarUrl} alt="" className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-[10px] font-medium text-accent">
-                      {authorName[0]?.toUpperCase() || 'J'}
+                      {(authorName && authorName[0] ? authorName[0].toUpperCase() : 'J')}
                     </div>
                   )}
               </div>
@@ -77,9 +79,11 @@ export function ArticleCard({ post }: { post: Post }) {
           <div className="flex items-center justify-between mt-auto">
              {/* Left Actions */}
              <div className="flex items-center gap-3">
-                <button className="p-1 hover:text-foreground text-muted-foreground transition-colors">
-                  <BookmarkPlus className="w-5 h-5 stroke-[1.5]" />
-                </button>
+                <SaveButton 
+                  postId={post.id} 
+                  initialIsSaved={post.is_saved} 
+                  className="p-1 hover:bg-transparent" // Override base styles to match card
+                />
                 <button className="p-1 hover:text-foreground text-muted-foreground transition-colors">
                    <MoreHorizontal className="w-5 h-5 stroke-[1.5]" />
                 </button>

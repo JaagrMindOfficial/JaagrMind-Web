@@ -12,6 +12,7 @@ export interface GetPostsOptions {
   topicSlug?: string;
   sortBy?: 'created_at' | 'updated_at' | 'view_count' | 'clap_count';
   sortDir?: 'asc' | 'desc';
+  viewerId?: string;
 }
 
 export async function getPosts(
@@ -25,7 +26,8 @@ export async function getPosts(
     topicId, 
     topicSlug,
     sortBy = 'created_at',
-    sortDir = 'desc'
+    sortDir = 'desc',
+    viewerId
   } = options;
   const offset = (page - 1) * pageSize;
 
@@ -92,6 +94,23 @@ export async function getPosts(
     post_topics: undefined,
   }));
 
+  // Decorate with saved status if viewerId is provided
+  if (viewerId && posts.length > 0) {
+    console.log(`[PostsRepo] Checking saved status for viewer ${viewerId} on ${posts.length} posts`);
+    const postIds = posts.map(p => p.id);
+    const { data: savedPosts } = await supabaseAdmin
+      .from('saved_posts')
+      .select('post_id')
+      .eq('user_id', viewerId)
+      .in('post_id', postIds);
+      
+    const savedPostIds = new Set(savedPosts?.map(sp => sp.post_id) || []);
+    
+    posts.forEach(post => {
+      post.is_saved = savedPostIds.has(post.id);
+    });
+  }
+
   return {
     data: posts as PostWithStats[],
     meta: {
@@ -103,7 +122,7 @@ export async function getPosts(
   };
 }
 
-export async function getStaffPicks(limit = 3): Promise<PostWithStats[]> {
+export async function getStaffPicks(limit = 3, viewerId?: string): Promise<PostWithStats[]> {
   const { data, error } = await supabaseAdmin
     .from('posts_with_stats')
     .select('*, author:users!author_id(*, profiles(*)), post_topics(topics(*))')
@@ -117,14 +136,33 @@ export async function getStaffPicks(limit = 3): Promise<PostWithStats[]> {
 
   // Transform data
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (data || []).map((post: any) => ({
+  const posts = (data || []).map((post: any) => ({
     ...post,
     topics: post.post_topics?.map((pt: any) => pt.topics) || [],
     post_topics: undefined,
   })) as PostWithStats[];
+
+  // Decorate with saved status if viewerId is provided
+  // Decorate with saved status if viewerId is provided
+  if (viewerId && posts.length > 0) {
+      const postIds = posts.map(p => p.id);
+      const { data: savedPosts } = await supabaseAdmin
+        .from('saved_posts')
+        .select('post_id')
+        .eq('user_id', viewerId)
+        .in('post_id', postIds);
+        
+      const savedPostIds = new Set(savedPosts?.map(sp => sp.post_id) || []);
+      
+      posts.forEach(post => {
+        post.is_saved = savedPostIds.has(post.id);
+      });
+  }
+  
+  return posts;
 }
 
-export async function getPostBySlug(slug: string): Promise<PostWithStats | null> {
+export async function getPostBySlug(slug: string, viewerId?: string): Promise<PostWithStats | null> {
   const { data, error } = await supabaseAdmin
     .from('posts_with_stats')
     .select('*, author:users!author_id(*, profiles(*)), post_topics(topics(*))')
@@ -143,9 +181,20 @@ export async function getPostBySlug(slug: string): Promise<PostWithStats | null>
     topics: post.post_topics?.map((pt: any) => pt.topics) || [],
     post_topics: undefined,
   } as PostWithStats;
+
+  if (viewerId && post) {
+      const { data } = await supabaseAdmin
+        .from('saved_posts')
+        .select('id')
+        .match({ user_id: viewerId, post_id: post.id })
+        .maybeSingle();
+      post.is_saved = !!data;
+  }
+  
+  return post;
 }
 
-export async function getPostByUsernameAndSlug(username: string, slug: string): Promise<PostWithStats | null> {
+export async function getPostByUsernameAndSlug(username: string, slug: string, viewerId?: string): Promise<PostWithStats | null> {
   // 1. Resolve username to user_id
   const { data: profile } = await supabaseAdmin
     .from('profiles')
@@ -175,6 +224,17 @@ export async function getPostByUsernameAndSlug(username: string, slug: string): 
     topics: post.post_topics?.map((pt: any) => pt.topics) || [],
     post_topics: undefined,
   } as PostWithStats;
+
+  if (viewerId && post) {
+      const { data } = await supabaseAdmin
+        .from('saved_posts')
+        .select('id')
+        .match({ user_id: viewerId, post_id: post.id })
+        .maybeSingle();
+      post.is_saved = !!data;
+  }
+  
+  return post;
 }
 
 export async function getPostById(id: string): Promise<Post | null> {

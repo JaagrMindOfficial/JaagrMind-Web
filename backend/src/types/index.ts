@@ -69,6 +69,7 @@ export interface PostWithStats extends Post {
   author?: UserWithProfile;
   topics?: Topic[];
   publication?: Publication;
+  is_saved?: boolean;
 }
 
 // Content blocks (TipTap JSON format)

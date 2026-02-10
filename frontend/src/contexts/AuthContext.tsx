@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { User, getCurrentUser, login as apiLogin, logout as apiLogout, signup as apiSignup, clearTokens, getTokens } from '@/lib/api';
+import { User, getCurrentUser, login as apiLogin, logout as apiLogout, signup as apiSignup, clearTokens, getTokens, setTokens } from '@/lib/api';
 
 interface AuthContextType {
   user: User | null;
@@ -64,11 +64,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     
     const initAuth = async () => {
       try {
-        const { accessToken } = getTokens();
+        const { accessToken, refreshToken } = getTokens();
         if (!accessToken) {
           if (isMounted) setUser(null);
           return;
         }
+
+        // Sync cookie for SSR (in case it's missing but LS has it)
+        if (accessToken && refreshToken) {
+            setTokens(accessToken, refreshToken);
+        }
+
         const userData = await getCurrentUser();
         if (isMounted) {
             setUser(userData);

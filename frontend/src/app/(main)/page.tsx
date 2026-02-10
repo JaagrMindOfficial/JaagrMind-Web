@@ -2,6 +2,7 @@ import { Metadata } from 'next';
 import { getPosts, getStaffPicks, getWhoToFollow, Post, User } from '@/lib/api';
 import { RightSidebar } from '@/components/RightSidebar';
 import { ArticleCard } from '@/components/ArticleCard';
+import { cookies } from 'next/headers';
 
 export const metadata: Metadata = {
   title: 'JaagrMind - Empowering Education Through Knowledge',
@@ -20,9 +21,12 @@ export default async function HomePage() {
   let error: string | null = null;
 
   try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get('accessToken')?.value;
+
     const [postsRes, staffPicksRes, whoToFollowRes] = await Promise.all([
-      getPosts(1, 20),
-      getStaffPicks(3),
+      getPosts(1, 20, token),
+      getStaffPicks(3, token),
       getWhoToFollow(3)
     ]);
     posts = postsRes.data || [];

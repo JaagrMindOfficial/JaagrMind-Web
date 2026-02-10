@@ -51,6 +51,7 @@ export interface Post {
   reading_time: number;
   author?: User;
   topics?: Topic[];
+  is_saved?: boolean;
 }
 
 export interface ContentBlock {
@@ -102,6 +103,8 @@ export function setTokens(access: string, refresh: string) {
   if (typeof window !== 'undefined') {
     localStorage.setItem('accessToken', access);
     localStorage.setItem('refreshToken', refresh);
+    // Set cookie for SSR (7 days)
+    document.cookie = `accessToken=${access}; path=/; max-age=604800; SameSite=Lax`;
   }
 }
 
@@ -119,6 +122,8 @@ export function clearTokens() {
   if (typeof window !== 'undefined') {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
+    // Clear cookie
+    document.cookie = 'accessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
   }
 }
 
@@ -128,11 +133,16 @@ export function clearTokens() {
 
 import { logger } from './logger';
 
+interface FetchOptions extends RequestInit {
+    token?: string;
+}
+
 export async function apiFetch<T>(
   endpoint: string,
-  options: RequestInit = {}
+  options: FetchOptions = {}
 ): Promise<ApiResponse<T>> {
-  const { accessToken } = getTokens();
+  const { accessToken: storedToken } = getTokens();
+  const accessToken = options.token || storedToken;
   
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
@@ -144,12 +154,16 @@ export async function apiFetch<T>(
   }
 
   const method = options.method || 'GET';
+  
+  // Remove token from options before passing to fetch
+  const { token, ...fetchOptions } = options;
+  
   logger.info('API', `Request: ${method} ${endpoint}`, options.body ? { body: JSON.parse(options.body as string) } : undefined);
 
   try {
     const start = Date.now();
     const response = await fetch(`${API_URL}${endpoint}`, {
-      ...options,
+      ...fetchOptions,
       headers,
     });
     const duration = Date.now() - start;
@@ -204,14 +218,16 @@ export async function login(
   return result;
 }
 
-export async function getPostByUsernameAndSlug(username: string, slug: string): Promise<Post | null> {
+export async function getPostByUsernameAndSlug(username: string, slug: string, token?: string): Promise<Post | null> {
   // Username comes in as '%40username' or '@username' from the URL params
   // We need to ensure we send it correctly to the API
   const cleanUsername = username.startsWith('%40') ? username.replace('%40', '') : username.replace('@', '');
   
-  const res = await apiFetch<Post>(`/posts/@${cleanUsername}/${slug}`, {
-    next: { revalidate: 60 },
-  });
+  const fetchOptions: FetchOptions = token 
+    ? { cache: 'no-store', token } 
+    : { next: { revalidate: 60 } };
+
+  const res = await apiFetch<Post>(`/posts/@${cleanUsername}/${slug}`, fetchOptions);
   
   return res.success ? res.data || null : null;
 }
@@ -240,20 +256,29 @@ export async function getCurrentUser(): Promise<User | null> {
 
 export async function getPosts(
   page = 1,
-  pageSize = 10
+  pageSize = 10,
+  token?: string
 ): Promise<PaginatedResponse<Post>> {
   const params = new URLSearchParams({
     page: page.toString(),
     pageSize: pageSize.toString(),
   });
 
-  const result = await apiFetch<PaginatedResponse<Post>>(`/posts?${params}`);
+  const fetchOptions: FetchOptions = token 
+    ? { cache: 'no-store', token } 
+    : { next: { revalidate: 60 } };
+
+  const result = await apiFetch<PaginatedResponse<Post>>(`/posts?${params}`, fetchOptions);
   
   return result as unknown as PaginatedResponse<Post>;
 }
 
-export async function getStaffPicks(limit = 3): Promise<Post[]> {
-  const result = await apiFetch<Post[]>(`/posts/staff-picks?limit=${limit}`);
+export async function getStaffPicks(limit = 3, token?: string): Promise<Post[]> {
+  const fetchOptions: FetchOptions = token 
+    ? { cache: 'no-store', token } 
+    : { next: { revalidate: 3600 } }; // Cache staff picks for 1 hour for anon users
+
+  const result = await apiFetch<Post[]>(`/posts/staff-picks?limit=${limit}`, fetchOptions);
   return result.success ? result.data || [] : [];
 }
 
@@ -399,3 +424,72 @@ function renderInline(content?: ContentBlock[]): string {
     return '';
   }).join('');
 }
+
+// ============================================================
+// LIBRARY (SAVED POSTS & HISTORY)
+// ============================================================
+
+export async function savePost(postId: string): Promise<{ saved: boolean }> {
+  const result = await apiFetch<{ saved: boolean }>('/library/saved', {
+    method: 'POST',
+    body: JSON.stringify({ postId }),
+  });
+  if (!result.success) throw new Error(result.error || 'Failed to save post');
+  return result.data || { saved: false };
+}
+
+export async function unsavePost(postId: string): Promise<{ saved: boolean }> {
+  const result = await apiFetch<{ saved: boolean }>(`/library/saved/${postId}`, {
+    method: 'DELETE',
+  });
+  if (!result.success) throw new Error(result.error || 'Failed to unsave post');
+  return result.data || { saved: false };
+}
+
+export async function getSavedPosts(page = 1, limit = 10): Promise<PaginatedResponse<Post>> {
+  const result = await apiFetch<PaginatedResponse<Post>>(`/library/saved?page=${page}&limit=${limit}`);
+  return result as unknown as PaginatedResponse<Post>;
+}
+
+export async function checkSavedStatus(postId: string): Promise<{ saved: boolean }> {
+  const result = await apiFetch<{ saved: boolean }>(`/library/saved/${postId}/status`);
+  return result.data || { saved: false };
+}
+
+export async function trackRead(postId: string): Promise<void> {
+  await apiFetch(`/library/history/${postId}`, { method: 'POST' });
+}
+
+export interface HistoryPost extends Post {
+  last_read_at?: string;
+}
+
+export async function getHistory(page = 1, limit = 10): Promise<PaginatedResponse<HistoryPost>> {
+  const result = await apiFetch<PaginatedResponse<HistoryPost>>(`/library/history?page=${page}&limit=${limit}`);
+  return result as unknown as PaginatedResponse<HistoryPost>;
+}
+
+export interface ResponseItem {
+  id: string;
+  content: string;
+  created_at: string;
+  post: {
+    id: string;
+    title: string;
+    slug: string;
+    author: {
+        username: string;
+    }
+  };
+}
+
+export async function getResponses(page = 1, limit = 10): Promise<PaginatedResponse<ResponseItem>> {
+  const result = await apiFetch<PaginatedResponse<ResponseItem>>(`/library/responses?page=${page}&limit=${limit}`);
+  return result as unknown as PaginatedResponse<ResponseItem>;
+}
+
+export async function getLibraryStats(): Promise<{ savedCount: number, historyCount: number }> {
+  const result = await apiFetch<{ savedCount: number, historyCount: number }>('/library/stats');
+  return result.data || { savedCount: 0, historyCount: 0 };
+}
+
