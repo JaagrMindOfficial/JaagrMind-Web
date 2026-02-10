@@ -296,3 +296,60 @@ export async function recordView(
 
   if (error) throw error;
 }
+
+// ============================================================
+// TIME TREACKING
+// ============================================================
+
+export async function trackReadingTime(
+  postId: string,
+  userId: string | null,
+  sessionId: string | null,
+  durationSeconds: number
+): Promise<void> {
+  // Upsert logic: if row exists for (post, user, session), add to duration
+  // Since supabase-js upsert is tricky with increment, we might need RPC or check-then-update
+  // For simplicity and to avoid race conditions in simple setup, we'll try a direct insert with conflict handling 
+  // OR we can use the UNIQUE constraint we added.
+  
+  // However, we want to INCREMENT the duration, not replace it.
+  // Standard upsert replaces.
+  
+  // Strategy: Try to fetch existing record
+  let query = supabaseAdmin
+    .from('post_reading_sessions')
+    .select('id, duration_seconds')
+    .eq('post_id', postId);
+    
+  if (userId) {
+    query = query.eq('user_id', userId);
+  } else if (sessionId) {
+    query = query.eq('session_id', sessionId);
+  } else {
+    return; // No identifier
+  }
+  
+  const { data: existing } = await query.single();
+  
+  if (existing) {
+    // Increment
+    await supabaseAdmin
+      .from('post_reading_sessions')
+      .update({ 
+        duration_seconds: (existing.duration_seconds || 0) + durationSeconds,
+        last_active_at: new Date().toISOString()
+      })
+      .eq('id', existing.id);
+  } else {
+    // Insert new
+    await supabaseAdmin
+      .from('post_reading_sessions')
+      .insert({
+        post_id: postId,
+        user_id: userId,
+        session_id: sessionId,
+        duration_seconds: durationSeconds,
+        last_active_at: new Date().toISOString()
+      });
+  }
+}

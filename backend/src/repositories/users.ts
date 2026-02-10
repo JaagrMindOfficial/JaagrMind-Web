@@ -136,4 +136,59 @@ export const usersRepository = {
       throw err;
     }
   },
+
+  async getWhoToFollow(userId: string | null, limit = 3) {
+    // For now, return random users who are NOT the current user
+    // Ideally, exclude users already followed
+    let query = supabase
+      .from('users')
+      .select(`
+        *,
+        profiles(username, display_name, avatar_url, bio)
+      `)
+      .neq('role', 'reader') // Only suggest authors/editors/admin
+      .limit(limit);
+
+    if (userId) {
+      query = query.neq('id', userId);
+    }
+    
+    const { data, error } = await query;
+    
+    if (error) throw error;
+    return data as User[];
+  },
+
+  async getFollowing(userId: string, page = 1, limit = 10) {
+    // 1. Get IDs of users being followed
+    const { data: follows, error: followError } = await supabase
+      .from('follows')
+      .select('following_id')
+      .eq('follower_id', userId)
+      .range((page - 1) * limit, page * limit - 1);
+
+    if (followError) throw followError;
+
+    if (!follows || follows.length === 0) {
+      return { data: [], total: 0 };
+    }
+
+    const followingIds = follows.map(f => f.following_id);
+
+    // 2. Fetch user details
+    const { data: users, error: userError, count } = await supabase
+      .from('users')
+      .select(`
+        *,
+        profiles(username, display_name, avatar_url, bio)
+      `, { count: 'exact' })
+      .in('id', followingIds);
+
+    if (userError) throw userError;
+
+    return {
+      data: users as User[],
+      total: count || 0
+    };
+  }
 };

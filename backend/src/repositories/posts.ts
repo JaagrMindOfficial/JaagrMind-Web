@@ -103,6 +103,27 @@ export async function getPosts(
   };
 }
 
+export async function getStaffPicks(limit = 3): Promise<PostWithStats[]> {
+  const { data, error } = await supabaseAdmin
+    .from('posts_with_stats')
+    .select('*, author:users!author_id(*, profiles(*)), post_topics(topics(*))')
+    .eq('status', 'published')
+    .eq('is_staff_pick', true)
+    .is('deleted_at', null)
+    .order('published_at', { ascending: false })
+    .limit(limit);
+
+  if (error) throw error;
+
+  // Transform data
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (data || []).map((post: any) => ({
+    ...post,
+    topics: post.post_topics?.map((pt: any) => pt.topics) || [],
+    post_topics: undefined,
+  })) as PostWithStats[];
+}
+
 export async function getPostBySlug(slug: string): Promise<PostWithStats | null> {
   const { data, error } = await supabaseAdmin
     .from('posts_with_stats')
@@ -175,10 +196,25 @@ export async function getPostById(id: string): Promise<Post | null> {
   } as Post;
 }
 
+import { calculateReadingTime, extractText, countWords, MAX_WORDS_PER_POST } from '../utils/readingTime.js';
+
+// ... (imports)
+
 export async function createPost(
   authorId: string,
   data: Partial<Post>
 ): Promise<Post> {
+  const readingTime = data.content ? calculateReadingTime(data.content) : 1;
+
+  // Validation: Word Count Limits
+  if (data.content) {
+    const text = extractText(data.content);
+    const words = countWords(text);
+    if (words > MAX_WORDS_PER_POST) {
+      throw new Error(`Post exceeds maximum limit of ${MAX_WORDS_PER_POST} words.`);
+    }
+  }
+
   const { data: post, error } = await supabaseAdmin
     .from('posts')
     .insert({
@@ -190,6 +226,7 @@ export async function createPost(
       cover_url: data.cover_url,
       status: data.status || 'draft',
       publication_id: data.publication_id,
+      reading_time: readingTime, // Auto-calculated
     })
     .select()
     .single();
@@ -209,7 +246,17 @@ export async function updatePost(
   if (data.title !== undefined) updateData.title = data.title;
   if (data.subtitle !== undefined) updateData.subtitle = data.subtitle;
   if (data.slug !== undefined) updateData.slug = data.slug;
-  if (data.content !== undefined) updateData.content = data.content;
+  if (data.content !== undefined) {
+    // Validation: Word Count Limits
+    const text = extractText(data.content);
+    const words = countWords(text);
+    if (words > MAX_WORDS_PER_POST) {
+      throw new Error(`Post exceeds maximum limit of ${MAX_WORDS_PER_POST} words.`);
+    }
+
+    updateData.content = data.content;
+    updateData.reading_time = calculateReadingTime(data.content); // Recalculate on update
+  }
   if (data.cover_url !== undefined) updateData.cover_url = data.cover_url;
   if (data.status !== undefined) updateData.status = data.status;
   if (data.publication_id !== undefined) updateData.publication_id = data.publication_id;

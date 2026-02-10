@@ -9,10 +9,12 @@ const router = Router();
 router.use(authenticate);
 
 // Public routes
+router.get('/staff-picks', postsController.getStaffPicks); // must be before /:slug
 router.get('/', postsController.getPosts);
 router.get('/:slug', postsController.getPost);
 router.get('/@:username/:slug', postsController.getPostByAuthor);
 router.post('/:id/claps', postsController.addClaps);
+router.post('/:id/time', postsController.trackTime); // Public time tracking
 router.get('/:id/comments', postsController.getComments);
 
 // Auth required

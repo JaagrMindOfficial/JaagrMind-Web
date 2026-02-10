@@ -8,10 +8,8 @@ import Placeholder from '@tiptap/extension-placeholder';
 import Link from '@tiptap/extension-link';
 import Underline from '@tiptap/extension-underline';
 import BubbleMenuExtension from '@tiptap/extension-bubble-menu';
+import CharacterCount from '@tiptap/extension-character-count';
 import FloatingMenuExtension from '@tiptap/extension-floating-menu';
-
-// Debug logging removed
-
 
 import { 
   Bold, 
@@ -56,6 +54,9 @@ export function Editor({ content, onChange, placeholder = 'Write something...', 
       Underline,
       BubbleMenuExtension,
       FloatingMenuExtension,
+      CharacterCount.configure({
+        limit: 35000, // Approx 5000 words * 7 chars avg (including spaces)
+      }),
     ],
     content,
     editable,
@@ -88,6 +89,11 @@ export function Editor({ content, onChange, placeholder = 'Write something...', 
       editor.chain().focus().setImage({ src: url }).run();
     }
   };
+
+  const wordCount = editor.storage.characterCount.words();
+  const wordLimit = 5000;
+  const isNearLimit = wordCount > wordLimit * 0.9;
+  const readingTime = Math.ceil(wordCount / 200) || 1;
 
   return (
     <div className="relative">
@@ -188,6 +194,19 @@ export function Editor({ content, onChange, placeholder = 'Write something...', 
       )}
 
       <EditorContent editor={editor} />
+      
+      {/* Reading Time & Word Count Indicator */}
+      {editable && (
+        <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-1 opacity-50 hover:opacity-100 transition-opacity">
+          <div className={`flex items-center gap-2 text-xs backdrop-blur-sm px-3 py-1.5 rounded-full border shadow-lg ${isNearLimit ? 'bg-red-500/10 border-red-500/50 text-red-600' : 'bg-background/95 border-border text-muted-foreground'}`}>
+            <span className="font-medium text-foreground">{wordCount}</span>
+            <span className="text-muted-foreground">/ {wordLimit} words</span>
+            <span className="w-1 h-1 rounded-full bg-border" />
+            <span className="font-medium text-foreground">{readingTime}</span>
+            <span>min read</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

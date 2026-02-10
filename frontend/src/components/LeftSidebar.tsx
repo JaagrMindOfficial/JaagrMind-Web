@@ -1,18 +1,33 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
   Home, 
   BookOpen, 
-  User, 
-  Compass
+  User as UserIcon, 
+  Compass,
+  Search,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
+import { getFollowing, User } from '@/lib/api';
 
 export function LeftSidebar() {
   const pathname = usePathname();
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated } = useAuth();
+  const [following, setFollowing] = useState<User[]>([]);
+  const [isFollowingExpanded, setIsFollowingExpanded] = useState(true);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      getFollowing(1, 5).then((res) => {
+        if (res.data) setFollowing(res.data);
+      });
+    }
+  }, [isAuthenticated]);
 
   // Base nav items (always visible)
   const baseNavItems = [
@@ -23,7 +38,7 @@ export function LeftSidebar() {
   // Auth-only nav items
   const authNavItems = [
     { href: '/library', label: 'Library', icon: BookOpen },
-    { href: '/profile', label: 'Profile', icon: User },
+    { href: '/profile', label: 'Profile', icon: UserIcon },
   ];
 
   const navItems = isAuthenticated 
@@ -31,9 +46,9 @@ export function LeftSidebar() {
     : baseNavItems;
 
   return (
-    <aside className="flex flex-col h-[calc(100vh-56px)] sticky top-14 p-6 overflow-y-auto">
+    <aside className="flex flex-col h-[calc(100vh-56px)] sticky top-14 p-6 overflow-y-auto w-64">
       {/* Main Navigation */}
-      <nav className="space-y-1 mb-6">
+      <nav className="space-y-1 mb-8">
         {navItems.map((item) => {
           const isActive = pathname === item.href;
           return (
@@ -42,54 +57,55 @@ export function LeftSidebar() {
               href={item.href}
               className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
                 isActive
-                  ? 'text-foreground font-medium'
-                  : 'text-muted hover:text-foreground'
+                  ? 'text-foreground font-medium bg-accent/5'
+                  : 'text-muted hover:text-foreground hover:bg-accent/5'
               }`}
             >
-              <item.icon className="w-5 h-5" />
+              <item.icon className={`w-5 h-5 ${isActive ? 'text-accent' : ''}`} />
               {item.label}
             </Link>
           );
         })}
       </nav>
 
-      {/* Recommended Topics - Always visible */}
-      <div className="flex-1">
-        <h3 className="px-3 text-sm font-medium text-foreground mb-3">Recommended Topics</h3>
-        <div className="flex flex-wrap gap-2 px-3">
-          {['Education', 'Psychology', 'Parenting', 'Technology', 'Self Improvement', 'Science'].map((topic) => (
-            <Link
-              key={topic}
-              href={`/topic/${topic.toLowerCase().replace(' ', '-')}`}
-              className="px-3 py-1.5 bg-input rounded-full text-xs text-muted hover:text-foreground transition-colors"
-            >
-              {topic}
-            </Link>
-          ))}
-        </div>
-      </div>
-
-      {/* Auth prompt for unauthenticated users */}
-      {!isAuthenticated && (
-        <div className="mt-4 pt-4 border-t border-border">
-          <p className="px-3 text-sm text-muted mb-3">
-            Sign in to follow your favorite writers and save articles to your library.
-          </p>
-          <Link
-            href="/login"
-            className="block px-3 py-2 text-sm text-center bg-accent text-white rounded-full hover:bg-accent/90 transition-colors"
+      {/* Following List (Authenticated) */}
+      {isAuthenticated && following.length > 0 && (
+        <div className="mb-8">
+          <button 
+            onClick={() => setIsFollowingExpanded(!isFollowingExpanded)}
+            className="flex items-center justify-between w-full px-3 text-sm font-bold text-foreground mb-2 hover:text-accent transition-colors"
           >
-            Get started
-          </Link>
-        </div>
-      )}
-
-      {/* Following info for authenticated users */}
-      {isAuthenticated && user && (
-        <div className="mt-4 pt-4 border-t border-border">
-          <p className="px-3 text-xs text-muted">
-            Signed in as @{user.profiles?.username || user.email}
-          </p>
+            <span>Following</span>
+            {isFollowingExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          </button>
+          
+          {isFollowingExpanded && (
+            <div className="space-y-1">
+              {following.map((followedUser) => {
+                 const name = followedUser.profiles?.display_name || followedUser.profiles?.username || 'User';
+                 const username = followedUser.profiles?.username;
+                 return (
+                   <Link
+                     key={followedUser.id}
+                     href={`/@${username}`}
+                     className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-accent/5 transition-colors group"
+                   >
+                     <div className="w-5 h-5 rounded-full bg-accent/10 flex items-center justify-center overflow-hidden flex-shrink-0">
+                        {followedUser.profiles?.avatar_url ? (
+                          <img src={followedUser.profiles.avatar_url} alt={name} className="w-full h-full object-cover" />
+                        ) : (
+                          <span className="text-[9px] font-medium text-accent">{name[0]?.toUpperCase()}</span>
+                        )}
+                     </div>
+                     <span className="text-sm text-muted group-hover:text-foreground truncate">{name}</span>
+                   </Link>
+                 );
+              })}
+              <Link href="/following" className="block px-3 py-1.5 text-xs text-accent hover:underline mt-1">
+                View all
+              </Link>
+            </div>
+          )}
         </div>
       )}
     </aside>

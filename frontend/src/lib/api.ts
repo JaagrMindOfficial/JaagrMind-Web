@@ -251,6 +251,25 @@ export async function getPosts(
   return result as unknown as PaginatedResponse<Post>;
 }
 
+export async function getStaffPicks(limit = 3): Promise<Post[]> {
+  const result = await apiFetch<Post[]>(`/posts/staff-picks?limit=${limit}`);
+  return result.success ? result.data || [] : [];
+}
+
+export async function getWhoToFollow(limit = 3): Promise<User[]> {
+  const result = await apiFetch<User[]>(`/users/who-to-follow?limit=${limit}`);
+  return result.success ? result.data || [] : [];
+}
+
+export async function getFollowing(page = 1, limit = 10): Promise<PaginatedResponse<User>> {
+  const params = new URLSearchParams({
+    page: page.toString(),
+    limit: limit.toString(),
+  });
+  const result = await apiFetch<PaginatedResponse<User>>(`/users/following?${params}`);
+  return result as unknown as PaginatedResponse<User>;
+}
+
 export async function getPostBySlug(slug: string): Promise<Post | null> {
   const result = await apiFetch<Post>(`/posts/${slug}`);
   return result.success ? result.data || null : null;

@@ -55,6 +55,7 @@ export interface Post {
   cover_url: string | null;
   status: 'draft' | 'review' | 'published' | 'archived';
   published_at: string | null;
+  is_staff_pick: boolean;
   created_at: string;
   updated_at: string;
   deleted_at: string | null;

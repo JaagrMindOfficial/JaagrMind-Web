@@ -8,6 +8,7 @@ import { LeftSidebar } from '@/components/LeftSidebar';
 import { ClapsButton } from '@/components/ClapsButton';
 import { ShareButton } from '@/components/ShareButton';
 import { CommentsSection } from '@/components/CommentsSection';
+import { ReadingTracker } from '@/components/ReadingTracker';
 
 interface Props {
   params: Promise<{ username: string; slug: string }>;
@@ -73,6 +74,7 @@ export default async function BlogPostPage({ params }: Props) {
   return (
     <div className="min-h-screen bg-background">
       <Header />
+      <ReadingTracker postId={post.id} />
 
       {/* Full-width layout with sidebars at edges */}
       <div className="flex min-h-[calc(100vh-56px)]">

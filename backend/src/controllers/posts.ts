@@ -24,6 +24,15 @@ export const getPosts = asyncHandler(async (req: Request, res: Response) => {
 });
 
 /**
+ * GET /api/posts/staff-picks - Get staff picks
+ */
+export const getStaffPicks = asyncHandler(async (req: Request, res: Response) => {
+  const limit = Math.min(parseInt(req.query.limit as string) || 3, 10);
+  const posts = await postsRepo.getStaffPicks(limit);
+  res.json({ success: true, data: posts });
+});
+
+/**
  * GET /api/posts/:slug - Get single post
  */
 export const getPost = asyncHandler(async (req: Request, res: Response) => {
@@ -151,6 +160,31 @@ export const deleteComment = asyncHandler(async (req: Request, res: Response) =>
   }
 
   await engagementRepo.deleteComment(commentId);
+
+  res.json({ success: true });
+});
+
+/**
+ * POST /api/posts/:id/time - Track reading time
+ */
+export const trackTime = asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { sessionId, duration } = req.body;
+
+  if (!duration || typeof duration !== 'number') {
+    res.status(400).json({ success: false, error: 'Duration is required' });
+    return;
+  }
+
+  // Max 60 seconds per request to prevent abuse/errors
+  const safeDuration = Math.min(Math.max(0, duration), 60);
+
+  await engagementRepo.trackReadingTime(
+    id,
+    req.user?.id || null, // Can be null
+    sessionId || null,
+    safeDuration
+  );
 
   res.json({ success: true });
 });
