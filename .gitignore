@@ -1,0 +1,173 @@
+# ====================================
+# Dependencies
+# ====================================
+node_modules/
+.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# ====================================
+# Environment Variables (CRITICAL!)
+# ====================================
+.env
+.env.*
+!.env.example
+!.env.sample
+
+# ====================================
+# Next.js (Frontend)
+# ====================================
+frontend/.next/
+frontend/out/
+frontend/build/
+frontend/.vercel
+*.tsbuildinfo
+next-env.d.ts
+
+# ====================================
+# Strapi (Backend)
+# ====================================
+backend/.tmp/
+backend/.cache/
+backend/dist/
+backend/build/
+backend/.strapi/
+backend/.strapi-updater.json
+backend/.strapi-cloud.json
+backend/exports/
+backend/license.txt
+
+# Strapi uploads (keep the folder structure)
+backend/public/uploads/*
+!backend/public/uploads/.gitkeep
+
+# ====================================
+# Docker
+# ====================================
+*.log
+docker-compose.override.yml
+
+# ====================================
+# Logs & Debug
+# ====================================
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+lerna-debug.log*
+
+# ====================================
+# Testing & Coverage
+# ====================================
+coverage/
+.nyc_output/
+*.lcov
+
+# ====================================
+# IDE & Editors
+# ====================================
+.idea/
+.vscode/
+*.swp
+*.swo
+*.swn
+*.swm
+*.sublime-workspace
+*.sublime-project
+.project
+.classpath
+.settings/
+*.code-workspace
+.history/
+
+# ====================================
+# OS Generated Files
+# ====================================
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Icon?
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msm
+*.msp
+*.lnk
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# ====================================
+# Misc
+# ====================================
+*.pem
+*.key
+*.crt
+*.p12
+*.cer
+.cache/
+.parcel-cache/
+.eslintcache
+.stylelintcache
+*.pid
+*.seed
+*.pid.lock
+
+# Database files (if using SQLite locally)
+*.sqlite
+*.sqlite3
+*.db
+
+# Temporary files
+.tmp/
+tmp/
+temp/
+*.tmp
+*.temp
+*.bak
+*.backup
+
+# Package files
+*.7z
+*.dmg
+*.gz
+*.iso
+*.jar
+*.rar
+*.tar
+*.zip
+
+# ====================================
+# TypeScript
+# ====================================
+*.tsbuildinfo
+
+# ====================================
+# Compiled Output
+# ====================================
+dist/
+build/
+*.js.map
+implementation_plan.md
