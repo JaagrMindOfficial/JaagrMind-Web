@@ -72,7 +72,7 @@ export function Header() {
                       <p className="text-xs text-muted truncate">@{user.profiles?.username}</p>
                     </div>
                     <Link 
-                      href="/library" 
+                      href="/me/library" 
                       className="block px-4 py-2 text-sm hover:bg-accent/10 transition-colors"
                       onClick={() => setShowDropdown(false)}
                     >
@@ -84,6 +84,13 @@ export function Header() {
                       onClick={() => setShowDropdown(false)}
                     >
                       Profile
+                    </Link>
+                    <Link 
+                      href="/me/settings" 
+                      className="block px-4 py-2 text-sm hover:bg-accent/10 transition-colors"
+                      onClick={() => setShowDropdown(false)}
+                    >
+                      Settings
                     </Link>
                     <button 
                       onClick={() => {

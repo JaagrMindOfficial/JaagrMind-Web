@@ -16,7 +16,7 @@ import { getFollowing, User } from '@/lib/api';
 
 export function LeftSidebar() {
   const pathname = usePathname();
-  const { isAuthenticated, followingIds } = useAuth();
+  const { user, isAuthenticated, followingIds } = useAuth();
   const [following, setFollowing] = useState<User[]>([]);
   const [isFollowingExpanded, setIsFollowingExpanded] = useState(true);
 
@@ -36,13 +36,22 @@ export function LeftSidebar() {
 
   // Auth-only nav items
   const authNavItems = [
-    { href: '/library', label: 'Library', icon: BookOpen },
-    { href: '/profile', label: 'Profile', icon: UserIcon },
+    { href: '/me/library', label: 'Library', icon: BookOpen },
+    // Link directly to public profile for "Profile" since it's the public view
+    // Or we could have /me/profile page that acts as a dashboard?
+    // User asked for /me/profile. Let's make it consistent. 
+    // But for now, let's link to the dynamic profile URL as that's what exists.
+    // Actually, let's use /me/settings for "Profile" management?
+    // No, standard is Profile -> Public View.
+    { href: user?.profiles?.username ? `/@${user.profiles.username}` : '/me/settings', label: 'Profile', icon: UserIcon },
   ];
 
   const navItems = isAuthenticated 
     ? [...baseNavItems, ...authNavItems]
     : baseNavItems;
+    
+  // Add Settings icon import if needed.
+  // Wait, I need to add Settings to imports.
 
   return (
     <aside className="flex flex-col h-full p-6">
@@ -107,7 +116,7 @@ export function LeftSidebar() {
                        </Link>
                      );
                   })}
-                  <Link href="/following" className="block px-3 py-1.5 text-xs text-accent hover:underline mt-1">
+                  <Link href="/me/following" className="block px-3 py-1.5 text-xs text-accent hover:underline mt-1">
                     View all
                   </Link>
                 </>
