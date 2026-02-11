@@ -174,15 +174,15 @@ export async function getPostBySlug(slug: string, viewerId?: string): Promise<Po
   if (error || !data) return null;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const post = data as any;
+  const rawPost = data as any;
   
-  return {
-    ...post,
-    topics: post.post_topics?.map((pt: any) => pt.topics) || [],
+  const post = {
+    ...rawPost,
+    topics: rawPost.post_topics?.map((pt: any) => pt.topics) || [],
     post_topics: undefined,
   } as PostWithStats;
 
-  if (viewerId && post) {
+  if (viewerId) {
       const { data } = await supabaseAdmin
         .from('saved_posts')
         .select('id')
@@ -217,15 +217,15 @@ export async function getPostByUsernameAndSlug(username: string, slug: string, v
   if (error || !postData) return null;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const post = postData as any;
+  const rawPost = postData as any;
 
-  return {
-    ...post,
-    topics: post.post_topics?.map((pt: any) => pt.topics) || [],
+  const post = {
+    ...rawPost,
+    topics: rawPost.post_topics?.map((pt: any) => pt.topics) || [],
     post_topics: undefined,
   } as PostWithStats;
 
-  if (viewerId && post) {
+  if (viewerId) {
       const { data } = await supabaseAdmin
         .from('saved_posts')
         .select('id')

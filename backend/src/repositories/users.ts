@@ -270,5 +270,19 @@ export const usersRepository = {
     if (error && error.code !== 'PGRST116') throw error; // PGRST116 is "not found"
     
     return !!data;
+  },
+
+  async getFollowedUserIds(followerId: string, targetIds: string[]): Promise<Set<string>> {
+    if (targetIds.length === 0) return new Set();
+
+    const { data, error } = await supabaseAdmin
+      .from('follows')
+      .select('following_id')
+      .eq('follower_id', followerId)
+      .in('following_id', targetIds);
+
+    if (error) throw error;
+
+    return new Set(data?.map(f => f.following_id) || []);
   }
 };

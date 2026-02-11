@@ -3,6 +3,7 @@
 // The backend logs should have appeared in the terminal if `NODE_ENV=development`.
 // Let's explicitly log the error in `getSavedPosts` controller.
 
+import { Request, Response } from 'express';
 import { asyncHandler } from '../middleware/error.js';
 import { libraryRepository } from '../repositories/library.js';
 

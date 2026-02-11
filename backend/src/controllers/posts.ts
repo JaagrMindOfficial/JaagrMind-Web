@@ -3,6 +3,8 @@ import { asyncHandler } from '../middleware/error.js';
 import * as postsRepo from '../repositories/posts.js';
 import * as engagementRepo from '../repositories/engagement.js';
 
+import { usersRepository } from '../repositories/users.js';
+
 /**
  * GET /api/posts - List published posts
  */
@@ -24,15 +26,17 @@ export const getPosts = asyncHandler(async (req: Request, res: Response) => {
   // Inject is_following status if user is authenticated
   if (req.user) {
     const posts = result.data;
-    await Promise.all(posts.map(async (post) => {
-      if (post.author_id && req.user!.id !== post.author_id) {
-        const isFollowing = await usersRepository.isFollowing(req.user!.id, post.author_id);
-        if (post.author) {
-          // @ts-ignore
-          post.author.is_following = isFollowing;
-        }
+    const authorIds = Array.from(new Set(posts.map(p => p.author_id).filter((id): id is string => !!id)));
+    
+    // Batch fetch followed status
+    const followedIds = await usersRepository.getFollowedUserIds(req.user.id, authorIds);
+
+    posts.forEach(post => {
+      if (post.author && post.author_id && post.author_id !== req.user!.id) {
+         // @ts-ignore
+         post.author.is_following = followedIds.has(post.author_id);
       }
-    }));
+    });
   }
 
   res.json({ success: true, ...result });
@@ -47,15 +51,17 @@ export const getStaffPicks = asyncHandler(async (req: Request, res: Response) =>
 
   // Inject is_following status if user is authenticated
   if (req.user) {
-    await Promise.all(posts.map(async (post) => {
-      if (post.author_id && req.user!.id !== post.author_id) {
-        const isFollowing = await usersRepository.isFollowing(req.user!.id, post.author_id);
-        if (post.author) {
-          // @ts-ignore
-          post.author.is_following = isFollowing;
-        }
-      }
-    }));
+    const authorIds = Array.from(new Set(posts.map(p => p.author_id).filter((id): id is string => !!id)));
+    
+    // Batch fetch followed status
+    const followedIds = await usersRepository.getFollowedUserIds(req.user.id, authorIds);
+
+    posts.forEach(post => {
+       if (post.author && post.author_id && post.author_id !== req.user!.id) {
+         // @ts-ignore
+         post.author.is_following = followedIds.has(post.author_id);
+       }
+    });
   }
 
   res.json({ success: true, data: posts });
@@ -64,7 +70,7 @@ export const getStaffPicks = asyncHandler(async (req: Request, res: Response) =>
 /**
  * GET /api/posts/:slug - Get single post
  */
-import { usersRepository } from '../repositories/users.js';
+
 
 // ...
 

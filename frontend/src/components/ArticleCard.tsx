@@ -2,9 +2,11 @@
 
 import Link from 'next/link';
 import { format } from 'date-fns';
-import { MoreHorizontal, ThumbsUp, MessageCircle } from 'lucide-react';
+import { MoreHorizontal, MessageCircle } from 'lucide-react';
+import { Clap } from '@/components/icons/Clap';
 import { Post } from '@/lib/api';
 import { SaveButton } from '@/components/SaveButton';
+import { Tooltip } from '@/components/ui/Tooltip';
 
 // Get image URL helper (for S3 URLs)
 function getImageUrl(imageUrl?: string | null): string | null {
@@ -84,22 +86,27 @@ export function ArticleCard({ post }: { post: Post }) {
                   initialIsSaved={post.is_saved} 
                   className="p-1 hover:bg-transparent" // Override base styles to match card
                 />
-                <button className="p-1 hover:text-foreground text-muted-foreground transition-colors">
-                   <MoreHorizontal className="w-5 h-5 stroke-[1.5]" />
+                <button className="p-1 hover:text-foreground text-muted-foreground transition-colors group/more">
+                   <MoreHorizontal className="w-5 h-5 stroke-[1.5] group-hover/more:scale-110 transition-transform" />
                 </button>
              </div>
 
              {/* Right Stats (Date, Claps, Comments) */}
              <div className="flex items-center gap-4 text-xs text-muted-foreground">
                 <span>{publishDate}</span>
-                <div className="flex items-center gap-1">
-                   <ThumbsUp className="w-4 h-4" />
-                   <span>{claps}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                   <MessageCircle className="w-4 h-4" />
-                   <span>{comments}</span>
-                </div>
+                <Tooltip content={`${claps} clap${claps !== 1 ? 's' : ''}`}>
+                  <div className="flex items-center gap-1 group/clap cursor-pointer">
+                     <Clap className="w-5 h-5 group-hover/clap:scale-110 transition-transform" />
+                     <span>{claps}</span>
+                  </div>
+                </Tooltip>
+                
+                <Tooltip content={`${comments} response${comments !== 1 ? 's' : ''}`}>
+                  <div className="flex items-center gap-1 group/comment cursor-pointer">
+                     <MessageCircle className="w-5 h-5 group-hover/comment:scale-110 transition-transform" />
+                     <span>{comments}</span>
+                  </div>
+                </Tooltip>
              </div>
           </div>
         </div>

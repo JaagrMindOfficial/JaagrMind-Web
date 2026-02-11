@@ -8,13 +8,13 @@ import {
   EyeOff, 
   Eye, 
   BarChart2, 
-  ThumbsUp, 
   Clock,
   ExternalLink,
   Edit,
   MessageCircle,
   Activity
 } from 'lucide-react';
+import { Clap } from '@/components/icons/Clap';
 import { format } from 'date-fns';
 import { 
   LineChart, 
@@ -212,7 +212,7 @@ export function PostStatsModal({ post, isOpen, onClose, onUpdate }: PostStatsMod
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 shrink-0">
                         <div className="p-4 bg-muted/30 rounded-lg border border-border">
                             <div className="flex items-center gap-2 text-muted-foreground mb-2">
-                                <Eye className="w-4 h-4" />
+                                <Eye className="w-5 h-5" />
                                 <span className="text-sm font-medium">Total Views</span>
                             </div>
                             <div className="text-2xl font-bold">
@@ -221,7 +221,7 @@ export function PostStatsModal({ post, isOpen, onClose, onUpdate }: PostStatsMod
                         </div>
                         <div className="p-4 bg-muted/30 rounded-lg border border-border">
                             <div className="flex items-center gap-2 text-muted-foreground mb-2">
-                                <ThumbsUp className="w-4 h-4" />
+                                <Clap className="w-5 h-5" />
                                 <span className="text-sm font-medium">Total Claps</span>
                             </div>
                             <div className="text-2xl font-bold">
@@ -230,7 +230,7 @@ export function PostStatsModal({ post, isOpen, onClose, onUpdate }: PostStatsMod
                         </div>
                         <div className="p-4 bg-muted/30 rounded-lg border border-border">
                             <div className="flex items-center gap-2 text-muted-foreground mb-2">
-                                <MessageCircle className="w-4 h-4" />
+                                <MessageCircle className="w-5 h-5" />
                                 <span className="text-sm font-medium">Total Comments</span>
                             </div>
                             <div className="text-2xl font-bold">
@@ -239,7 +239,7 @@ export function PostStatsModal({ post, isOpen, onClose, onUpdate }: PostStatsMod
                         </div>
                          <div className="p-4 bg-muted/30 rounded-lg border border-border">
                             <div className="flex items-center gap-2 text-muted-foreground mb-2">
-                                <Activity className="w-4 h-4" />
+                                <Activity className="w-5 h-5" />
                                 <span className="text-sm font-medium">Engagement Rate</span>
                             </div>
                             <div className="text-2xl font-bold">
@@ -250,7 +250,7 @@ export function PostStatsModal({ post, isOpen, onClose, onUpdate }: PostStatsMod
                         </div>
                         <div className="p-4 bg-muted/30 rounded-lg border border-border col-span-2 md:col-span-1 lg:col-span-1">
                             <div className="flex items-center gap-2 text-muted-foreground mb-2">
-                                <Clock className="w-4 h-4" />
+                                <Clock className="w-5 h-5" />
                                 <span className="text-sm font-medium">Est. Read Time</span>
                             </div>
                             <div className="text-2xl font-bold">

@@ -64,7 +64,7 @@ export function SaveButton({
       onClick={handleSave}
       disabled={loading}
       className={cn(
-        "transition-colors flex items-center gap-2",
+        "transition-colors flex items-center gap-2 group cursor-pointer",
         isSaved ? "text-green-600" : "text-muted-foreground hover:text-foreground",
         className
       )}
@@ -72,7 +72,7 @@ export function SaveButton({
     >
       <Bookmark 
         className={cn(
-            "stroke-[1.5]", 
+            "stroke-[1.5] transition-transform duration-200 ease-out group-hover:scale-110", 
             isSaved ? "fill-green-600" : "",
             size === 'sm' ? "w-4 h-4" : "w-5 h-5"
         )} 
