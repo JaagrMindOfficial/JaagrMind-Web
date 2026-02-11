@@ -10,6 +10,8 @@ export interface User {
     username: string;
     display_name: string | null;
     avatar_url: string | null;
+    bio?: string;
+    website?: string;
   };
   can_delete_own_comments?: boolean;
   can_delete_others_comments?: boolean;
@@ -57,7 +59,81 @@ export const usersRepository = {
       .single();
 
     if (error) return null;
+    if (error) return null;
     return data as User;
+  },
+
+  async getUserByUsername(username: string): Promise<User | null> {
+    try {
+      // 1. Find the full profile first
+      const { data: profile, error: profileError } = await supabaseAdmin
+        .from('profiles')
+        .select('user_id, username, display_name, avatar_url, bio, website')
+        .eq('username', username)
+        .single();
+
+      if (profileError) {
+          console.error('Error fetching profile for username:', username, profileError);
+          return null;
+      }
+      if (!profile) {
+          return null;
+      };
+
+      // 2. Get the user basic details (using admin client to bypass RLS)
+      const { data: user, error: userError } = await supabaseAdmin
+        .from('users')
+        .select('*')
+        .eq('id', profile.user_id)
+        .single();
+
+      if (userError) {
+          console.error('Error fetching user details:', userError);
+          // If user entry is missing but profile exists, that's a data integrity issue, but we can't return a User object reliably.
+          return null;
+      }
+
+      // 3. Construct the combined User object
+      const fullUser: User = {
+          ...user,
+          profiles: {
+              username: profile.username,
+              display_name: profile.display_name,
+              avatar_url: profile.avatar_url,
+              // bio and website are not in the User interface but we fetched them. 
+              // The User interface in this file defines profiles with specific fields.
+              // We should update the interface if we want to pass bio/website, 
+              // OR just pass them and let the controller handle it (controller uses what returns).
+              // For now, matching the interface.
+          }
+      };
+      
+      // We need to attach bio/website to the returned object so the controller can send it.
+      // The User interface in `users.ts` (lines 3-16) does NOT have bio/website in `profiles`.
+      // The controller sends `publicProfile`, so we should probably add them to the interface or cast.
+      // Since this is a repo method return type `Promise<User | null>`, I should respect that or extend it.
+      // The `getById` method selects bio/website but the Interface doesn't have them?
+      // Let's check the Interface at the top of the file!
+      // Line 9-13: username, display_name, avatar_url. NO bio or website.
+      // But getById (line 54) selects bio and website!
+      // This means the TypeScript interface is partial/outdated compared to the runtime data.
+      // I will return it as `User & { profiles: { bio: string, website: string } }` via casting if needed, 
+      // or just update existing interface.
+      
+      // Let's verify line 54 in getById: `profiles(username, display_name, avatar_url, bio, website)`
+      // Yes, it selects them. So the interface is likely loose or I should update it.
+      // I will update the interface in a separate edit if needed, for now I will cast to any to attach extra fields
+      // to ensure the frontend gets the bio!
+      
+      (fullUser.profiles as any).bio = profile.bio;
+      (fullUser.profiles as any).website = profile.website;
+
+      return fullUser;
+
+    } catch (e) {
+        console.error('Exception in getUserByUsername:', e);
+        throw e;
+    }
   },
 
   async updateRole(userId: string, role: string): Promise<void> {
@@ -111,7 +187,6 @@ export const usersRepository = {
   },
 
   async getUserStats(userId: string) {
-    console.log('Fetching stats for user:', userId);
     try {
       const { data: posts, error, count } = await supabase
         .from('posts_with_stats')
@@ -119,7 +194,6 @@ export const usersRepository = {
         .eq('author_id', userId);
 
       if (error) {
-        console.error('Error fetching user stats:', error);
         throw error;
       }
 
@@ -284,5 +358,23 @@ export const usersRepository = {
     if (error) throw error;
 
     return new Set(data?.map(f => f.following_id) || []);
+  },
+
+  async getFollowerCount(userId: string): Promise<number> {
+    try {
+      const { count, error } = await supabaseAdmin
+        .from('follows')
+        .select('*', { count: 'exact', head: true })
+        .eq('following_id', userId);
+
+      if (error) {
+        console.error('Error fetching follower count:', error);
+        throw error;
+      };
+      return count || 0;
+    } catch (e) {
+      console.error('Exception in getFollowerCount:', e);
+      return 0; // Return 0 instead of crashing
+    }
   }
 };

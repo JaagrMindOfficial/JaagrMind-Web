@@ -18,4 +18,9 @@ router.get('/me/following/ids', usersController.getMyFollowingIds);
 router.post('/:id/follow', usersController.followUser);
 router.delete('/:id/follow', usersController.unfollowUser);
 
+// Profile route (publicly accessible, but we use authenticate middleware globally currently)
+// If we want it public, we might need to adjust middleware or make it optional for this route.
+// For now, keeping it consistent with other routes.
+router.get('/:username', usersController.getUserProfile);
+
 export default router;

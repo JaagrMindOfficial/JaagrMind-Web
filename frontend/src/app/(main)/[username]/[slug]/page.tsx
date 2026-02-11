@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { format } from 'date-fns';
@@ -88,26 +89,28 @@ export default async function BlogPostPage({ params }: Props) {
 
           {/* Author Info */}
           <div className="flex items-center gap-3 py-3">
-            <div className="w-10 h-10 rounded-full overflow-hidden bg-border flex-shrink-0">
-              {authorAvatarUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={authorAvatarUrl}
-                  alt={authorName}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-sm font-medium text-muted bg-accent/10">
-                  {authorName[0]?.toUpperCase() || 'J'}
+            <Link href={`/@${post.author?.profiles?.username || decodedUsername}`} className="group relative">
+                <div className="w-10 h-10 rounded-full overflow-hidden bg-border flex-shrink-0 group-hover:ring-2 ring-offset-2 ring-primary transition-all">
+                  {authorAvatarUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={authorAvatarUrl}
+                      alt={authorName}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-sm font-medium text-muted bg-accent/10">
+                      {authorName[0]?.toUpperCase() || 'J'}
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
+            </Link>
 
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
-                <span className="text-sm font-medium">
+                <Link href={`/@${post.author?.profiles?.username || decodedUsername}`} className="text-sm font-medium hover:underline hover:text-foreground transition-colors">
                   {authorName}
-                </span>
+                </Link>
                 <span className="text-xs text-muted">·</span>
                 {post.author_id && (
                     <FollowButton 
@@ -184,25 +187,30 @@ export default async function BlogPostPage({ params }: Props) {
         {/* Author Footer */}
         <footer className="mt-8 pt-6 border-t border-border">
           <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-full overflow-hidden bg-border flex-shrink-0">
-              {authorAvatarUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={authorAvatarUrl}
-                  alt={authorName}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-lg font-medium text-muted bg-accent/10">
-                  {authorName[0]?.toUpperCase() || 'J'}
+            <Link href={`/@${post.author?.profiles?.username || decodedUsername}`} className="group relative">
+                <div className="w-12 h-12 rounded-full overflow-hidden bg-border flex-shrink-0 group-hover:ring-2 ring-offset-2 ring-primary transition-all">
+                  {authorAvatarUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={authorAvatarUrl}
+                      alt={authorName}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-lg font-medium text-muted bg-accent/10">
+                      {authorName[0]?.toUpperCase() || 'J'}
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
+            </Link>
             <div className="flex-1">
               <div className="flex items-center justify-between mb-1">
-                <p className="font-bold text-sm">
-                  Written by {authorName}
-                </p>
+                <div className="flex flex-col">
+                    <p className="text-xs text-muted-foreground mb-1 uppercase tracking-wider font-semibold">Written by</p>
+                    <Link href={`/@${post.author?.profiles?.username || decodedUsername}`} className="font-bold text-lg hover:underline text-foreground">
+                      {authorName}
+                    </Link>
+                </div>
                 {post.author_id && (
                     <FollowButton 
                         userId={post.author_id} 
@@ -211,7 +219,7 @@ export default async function BlogPostPage({ params }: Props) {
                 )}
               </div>
               {post.author?.profiles?.bio && (
-                <p className="text-sm text-muted">{post.author.profiles.bio}</p>
+                <p className="text-sm text-muted mt-2 leading-relaxed">{post.author.profiles.bio}</p>
               )}
             </div>
           </div>

@@ -42,7 +42,12 @@ export const getMyFollowingIds = asyncHandler(async (req: Request, res: Response
  * POST /api/users/:id/follow - Follow a user
  */
 export const followUser = asyncHandler(async (req: Request, res: Response) => {
-  const followerId = req.user!.id;
+  if (!req.user) {
+    res.status(401).json({ success: false, error: 'Authentication required' });
+    return;
+  }
+
+  const followerId = req.user.id;
   const targetId = req.params.id;
 
   await usersRepository.followUser(followerId, targetId);
@@ -53,9 +58,37 @@ export const followUser = asyncHandler(async (req: Request, res: Response) => {
  * DELETE /api/users/:id/follow - Unfollow a user
  */
 export const unfollowUser = asyncHandler(async (req: Request, res: Response) => {
-  const followerId = req.user!.id;
+  if (!req.user) {
+    res.status(401).json({ success: false, error: 'Authentication required' });
+    return;
+  }
+
+  const followerId = req.user.id;
   const targetId = req.params.id;
 
   await usersRepository.unfollowUser(followerId, targetId);
   res.json({ success: true });
+});
+
+/**
+ * GET /api/users/:username - Get user profile by username
+ */
+export const getUserProfile = asyncHandler(async (req: Request, res: Response) => {
+  const username = req.params.username.replace('@', ''); // Handle /@username format
+  const user = await usersRepository.getUserByUsername(username);
+  
+  if (!user) {
+    res.status(404).json({ success: false, error: 'User not found' });
+    return;
+  }
+  
+  // Get follower count
+  const followerCount = await usersRepository.getFollowerCount(user.id);
+
+  // Clean up sensitive data before sending
+  const { email, ...publicProfile } = user;
+  
+  // Return combined data
+  // casting to any to attach extra property without changing User interface globally for now
+  res.json({ success: true, data: { ...publicProfile, follower_count: followerCount } });
 });

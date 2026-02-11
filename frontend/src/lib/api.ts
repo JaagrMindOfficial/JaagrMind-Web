@@ -250,6 +250,11 @@ export async function getCurrentUser(): Promise<User | null> {
   return result.success ? result.data || null : null;
 }
 
+export async function getProfile(username: string): Promise<User | null> {
+  const result = await apiFetch<User>(`/users/${username}`);
+  return result.success ? result.data || null : null;
+}
+
 // ============================================================
 // POSTS (PUBLIC)
 // ============================================================
