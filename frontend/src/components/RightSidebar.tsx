@@ -63,7 +63,7 @@ export function RightSidebar({ staffPicks, whoToFollow: initialWhoToFollow, reco
 
   return (
     <aside className="hidden xl:block w-72 flex-shrink-0 border-l border-border">
-      <div className="sticky top-14 p-6 h-[calc(100vh-56px)] overflow-y-auto">
+      <div className="sticky top-14 p-6 h-[calc(100vh-56px)] overflow-y-auto no-scrollbar">
         
         {/* Staff Picks */}
         <section className="mb-8">

@@ -45,16 +45,13 @@ export default async function HomePage() {
   ];
 
   return (
-    <div className="flex w-full max-w-[1000px] gap-8 justify-center px-6 py-4">
-        {/* Main Feed */}
-        <div className="w-full max-w-[680px]">
+    <div className="relative w-full flex justify-center px-6 py-4">
+        {/* Main Feed - Explicitly Centered */}
+        <div className="w-full max-w-[680px] z-10 xl:-translate-x-32">
           {/* Feed Tabs */}
           <div className="flex items-center gap-6 border-b border-border mb-8">
             <button className="text-sm font-medium text-foreground border-b border-foreground pb-3 -mb-px">
               For you
-            </button>
-            <button className="text-sm text-muted hover:text-foreground transition-colors pb-3 -mb-px">
-              Following
             </button>
           </div>
 
@@ -79,12 +76,14 @@ export default async function HomePage() {
           )}
         </div>
 
-        {/* Right Sidebar - Fixed/Sticky on Home */}
-        <RightSidebar 
-          staffPicks={staffPicks} 
-          whoToFollow={whoToFollow} 
-          recommendedTopics={recommendedTopics} 
-        />
+        {/* Right Sidebar - Tucked to the screen edge */}
+        <div className="hidden xl:block absolute right-0 top-0 h-full pr-6 z-0">
+            <RightSidebar 
+              staffPicks={staffPicks} 
+              whoToFollow={whoToFollow} 
+              recommendedTopics={recommendedTopics} 
+            />
+        </div>
     </div>
   );
 }

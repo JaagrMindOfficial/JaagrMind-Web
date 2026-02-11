@@ -30,6 +30,9 @@ export interface Topic {
   slug: string;
   description: string | null;
   cover_url: string | null;
+  parent_id: string | null;
+  level?: number;
+  children?: Topic[];
   created_at: string;
 }
 

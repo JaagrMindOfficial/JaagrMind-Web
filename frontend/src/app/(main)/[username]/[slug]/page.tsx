@@ -74,7 +74,7 @@ export default async function BlogPostPage({ params }: Props) {
   return (
     <>
       <ReadingTracker postId={post.id} />
-      <article className="w-full max-w-[680px] px-6 py-6">
+      <article className="w-full max-w-[680px] px-6 py-6 xl:-translate-x-32">
         {/* Title Section */}
         <header className="mb-6">
           <h1 className="text-2xl sm:text-3xl font-bold leading-tight mb-2">

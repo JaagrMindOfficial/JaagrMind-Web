@@ -71,7 +71,7 @@ export default function ReadingListPage() {
         <div className="space-y-8">
           {posts.map((post) => (
             <div key={post.id} className="border-b border-border pb-8 last:border-0">
-               <ArticleCard post={post} />
+               <ArticleCard post={post} compact={true} />
             </div>
           ))}
         </div>

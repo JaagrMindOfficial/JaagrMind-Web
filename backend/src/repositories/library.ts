@@ -90,7 +90,7 @@ export const libraryRepository = {
         user_id: userId, 
         post_id: postId,
         last_read_at: new Date().toISOString()
-      }, { onConflict: 'user_id, post_id' });
+      }, { onConflict: 'user_id,post_id' });
 
     if (error) throw error;
   },

@@ -7,6 +7,10 @@ import { Clap } from '@/components/icons/Clap';
 import { Post } from '@/lib/api';
 import { SaveButton } from '@/components/SaveButton';
 import { Tooltip } from '@/components/ui/Tooltip';
+import { Dropdown } from '@/components/ui/Dropdown';
+import { useAuth } from '@/contexts/AuthContext';
+import { followUser, unfollowUser } from '@/lib/api';
+import { useState } from 'react';
 
 // Get image URL helper (for S3 URLs)
 function getImageUrl(imageUrl?: string | null): string | null {
@@ -14,7 +18,7 @@ function getImageUrl(imageUrl?: string | null): string | null {
   return imageUrl;
 }
 
-export function ArticleCard({ post }: { post: Post }) {
+export function ArticleCard({ post, compact = false }: { post: Post; compact?: boolean }) {
 
   const coverImageUrl = getImageUrl(post.cover_url);
   const authorAvatarUrl = getImageUrl(post.author?.profiles?.avatar_url);
@@ -26,12 +30,35 @@ export function ArticleCard({ post }: { post: Post }) {
   // Use first topic if available
   const topic = post.topics?.[0];
 
-  // Use real stats (or 0 if not available)
+    // Use real stats (or 0 if not available)
   const claps = post.clap_count || 0;
   const comments = post.comment_count || 0;
 
+  const { user, isAuthenticated } = useAuth();
+  const [isFollowing, setIsFollowing] = useState(post.author?.is_following || false);
+  const [isUpdatingFollow, setIsUpdatingFollow] = useState(false);
+
+  const handleFollow = async () => {
+    if (!isAuthenticated || !post.author_id) return;
+    
+    setIsUpdatingFollow(true);
+    try {
+      if (isFollowing) {
+        await unfollowUser(post.author_id);
+        setIsFollowing(false);
+      } else {
+        await followUser(post.author_id);
+        setIsFollowing(true);
+      }
+    } catch (error) {
+      console.error('Failed to update follow status:', error);
+    } finally {
+      setIsUpdatingFollow(false);
+    }
+  };
+
   return (
-    <article className="py-6 border-b border-border group first:pt-0">
+    <article className={`${compact ? 'py-5' : 'py-6'} border-b border-border first:pt-0`}>
       <div className="flex justify-between gap-8 sm:gap-12">
         {/* Left Column: Content & Meta */}
         <div className="flex-1 min-w-0 flex flex-col justify-between">
@@ -65,11 +92,11 @@ export function ArticleCard({ post }: { post: Post }) {
             </div>
 
             {/* Middle: Title/Content */}
-            <Link href={`/@${post.author?.profiles?.username || 'user'}/${post.slug}`} className="group-hover:opacity-100 block mb-2">
-              <h2 className="text-xl font-bold font-serif mb-1 text-foreground leading-tight line-clamp-2 decoration-offset-4 decoration-2">
+            <Link href={`/@${post.author?.profiles?.username || 'user'}/${post.slug}`} className="block mb-2 group">
+              <h2 className="text-xl font-bold font-serif mb-1 text-foreground leading-tight line-clamp-2 group-hover:decoration-current decoration-offset-4 decoration-2">
                 {post.title}
               </h2>
-              {post.subtitle && (
+              {!compact && post.subtitle && (
                 <p className="text-muted-foreground text-sm font-serif leading-relaxed line-clamp-2 sm:line-clamp-2 mt-1">
                   {post.subtitle}
                 </p>
@@ -86,9 +113,34 @@ export function ArticleCard({ post }: { post: Post }) {
                   initialIsSaved={post.is_saved} 
                   className="p-1 hover:bg-transparent" // Override base styles to match card
                 />
-                <button className="p-1 hover:text-foreground text-muted-foreground transition-colors group/more">
-                   <MoreHorizontal className="w-5 h-5 stroke-[1.5] group-hover/more:scale-110 transition-transform" />
-                </button>
+                
+                <Dropdown
+                   trigger={
+                      <button className="p-1 hover:text-foreground text-muted-foreground transition-colors group/more">
+                         <MoreHorizontal className="w-5 h-5 stroke-[1.5] group-hover/more:scale-110 transition-transform" />
+                      </button>
+                   }
+                >
+                   <div className="py-1 min-w-[160px]">
+                      {isAuthenticated && post.author_id !== user?.id ? (
+                        <button 
+                          onClick={handleFollow}
+                          disabled={isUpdatingFollow}
+                          className="w-full text-left px-4 py-2 text-sm hover:bg-accent/10 text-foreground transition-colors disabled:opacity-50"
+                        >
+                          {isFollowing ? 'Unfollow Author' : 'Follow Author'}
+                        </button>
+                      ) : !isAuthenticated ? (
+                         <Link href="/login" className="block w-full text-left px-4 py-2 text-sm hover:bg-accent/10 text-foreground transition-colors">
+                           Log in to follow
+                         </Link>
+                      ) : (
+                        <div className="px-4 py-2 text-sm text-neutral-500 dark:text-neutral-400">
+                           No actions available
+                        </div>
+                      )}
+                   </div>
+                </Dropdown>
              </div>
 
              {/* Right Stats (Date, Claps, Comments) */}
@@ -113,13 +165,13 @@ export function ArticleCard({ post }: { post: Post }) {
 
         {/* Right Column: Image */}
         {coverImageUrl && (
-          <div className="flex-shrink-0 w-20 h-20 sm:w-32 sm:h-32 bg-muted rounded-md overflow-hidden self-center sm:self-start sm:mt-8">
+          <div className="flex-shrink-0 w-20 h-20 sm:w-32 sm:h-32 bg-muted rounded-md overflow-hidden self-center sm:self-start sm:mt-8 group/image">
             <Link href={`/@${post.author?.profiles?.username || 'user'}/${post.slug}`}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img 
                 src={coverImageUrl} 
                 alt="" 
-                className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500"
+                className="w-full h-full object-cover transform group-hover/image:scale-105 transition-transform duration-500"
               />
             </Link>
           </div>

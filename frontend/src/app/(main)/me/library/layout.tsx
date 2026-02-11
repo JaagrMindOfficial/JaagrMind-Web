@@ -19,7 +19,7 @@ export default function LibraryLayout({
   ];
 
   return (
-    <div className="w-full max-w-[1000px] px-6 py-12 mx-auto">
+    <div className="w-full max-w-[680px] px-6 py-12 mx-auto">
       {/* Header Section */}
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-[42px] font-bold tracking-tight text-foreground font-serif">

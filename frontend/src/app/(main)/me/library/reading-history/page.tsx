@@ -71,7 +71,7 @@ export default function ReadingHistoryPage() {
         <div className="space-y-8">
           {posts.map((post) => (
              <div key={post.id} className="border-b border-border pb-8 last:border-0 relative">
-               <ArticleCard post={post} />
+               <ArticleCard post={post} compact={true} />
                <div className="absolute top-0 right-0 text-[10px] text-muted-foreground bg-accent/5 px-2 py-1 rounded">
                   Read {new Date(post.last_read_at || '').toLocaleDateString()}
                </div>

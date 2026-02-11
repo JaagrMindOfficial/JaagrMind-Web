@@ -31,6 +31,9 @@ export interface Topic {
   slug: string;
   description: string | null;
   cover_url: string | null;
+  parent_id: string | null;
+  level?: number;
+  children?: Topic[];
 }
 
 export interface Post {
@@ -496,5 +499,10 @@ export async function getResponses(page = 1, limit = 10): Promise<PaginatedRespo
 export async function getLibraryStats(): Promise<{ savedCount: number, historyCount: number }> {
   const result = await apiFetch<{ savedCount: number, historyCount: number }>('/library/stats');
   return result.data || { savedCount: 0, historyCount: 0 };
+}
+
+export async function getAllTopics(): Promise<Topic[]> {
+  const result = await apiFetch<Topic[]>('/topics');
+  return result.success ? result.data || [] : [];
 }
 
