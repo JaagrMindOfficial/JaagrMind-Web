@@ -40,6 +40,8 @@ export const libraryRepository = {
           created_at,
           reading_time,
           published_at,
+          clap_count,
+          comment_count,
           author:users!author_id (
             id,
             profiles (
@@ -109,6 +111,8 @@ export const libraryRepository = {
           created_at,
           reading_time,
           published_at,
+          clap_count,
+          comment_count,
           author:users!author_id (
             id,
             profiles (
@@ -187,14 +191,22 @@ export const libraryRepository = {
   // --- Stats for Library Dashboard ---
   
   async getLibraryStats(userId: string) {
-    const [saved, history] = await Promise.all([
-      supabaseAdmin.from('saved_posts').select('id', { count: 'exact', head: true }).eq('user_id', userId),
-      supabaseAdmin.from('reading_history').select('id', { count: 'exact', head: true }).eq('user_id', userId),
-    ]);
+    const { count: savedCount, error: savedError } = await supabaseAdmin
+      .from('saved_posts')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId);
+
+    const { count: historyCount, error: historyError } = await supabaseAdmin
+      .from('reading_history')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId);
+
+    if (savedError) console.error('Error counting saved posts:', savedError);
+    if (historyError) console.error('Error counting history:', historyError);
     
     return {
-      savedCount: saved.count || 0,
-      historyCount: history.count || 0
+      savedCount: savedCount || 0,
+      historyCount: historyCount || 0
     };
   }
 };

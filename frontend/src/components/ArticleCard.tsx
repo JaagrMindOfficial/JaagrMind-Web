@@ -96,14 +96,14 @@ export function ArticleCard({ post }: { post: Post }) {
                 <span>{publishDate}</span>
                 <Tooltip content={`${claps} clap${claps !== 1 ? 's' : ''}`}>
                   <div className="flex items-center gap-1 group/clap cursor-pointer">
-                     <Clap className="w-5 h-5 group-hover/clap:scale-110 transition-transform" />
+                     <Clap className="w-[18px] h-[18px] group-hover/clap:scale-110 transition-transform" />
                      <span>{claps}</span>
                   </div>
                 </Tooltip>
                 
                 <Tooltip content={`${comments} response${comments !== 1 ? 's' : ''}`}>
                   <div className="flex items-center gap-1 group/comment cursor-pointer">
-                     <MessageCircle className="w-5 h-5 group-hover/comment:scale-110 transition-transform" />
+                     <MessageCircle className="w-[18px] h-[18px] group-hover/comment:scale-110 transition-transform" />
                      <span>{comments}</span>
                   </div>
                 </Tooltip>

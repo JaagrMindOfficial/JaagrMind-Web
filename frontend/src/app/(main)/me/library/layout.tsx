@@ -25,9 +25,6 @@ export default function LibraryLayout({
         <h1 className="text-[42px] font-bold tracking-tight text-foreground font-serif">
           Your library
         </h1>
-        <button className="px-5 py-2 bg-[#1a8917] hover:bg-[#157312] text-white rounded-full text-sm font-medium transition-colors">
-          New list
-        </button>
       </div>
 
       {/* Tabs */}

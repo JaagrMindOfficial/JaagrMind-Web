@@ -131,7 +131,7 @@ export default async function BlogPostPage({ params }: Props) {
             <div className="flex items-center gap-4">
               <ClapsButton postId={post.id} initialCount={post.clap_count || 0} />
               <a href="#comments" className="flex items-center gap-1.5 text-muted hover:text-foreground transition-colors">
-                <MessageCircle className="w-5 h-5" />
+                <MessageCircle className="w-[18px] h-[18px]" />
                 <span className="text-xs">{post.comment_count || 0} Comments</span>
               </a>
             </div>

@@ -61,14 +61,14 @@ export function ClapsButton({ postId, initialCount = 0 }: ClapsButtonProps) {
         {/* Burst effect */}
         {showBurst && (
           <div className="absolute inset-0 animate-ping">
-            <Clap filled className="w-5 h-5 text-accent" />
+            <Clap filled className="w-[19px] h-[19px] text-accent" />
           </div>
         )}
         
         {/* Main clap icon */}
         <Clap
           filled={pendingClaps > 0}
-          className={`w-5 h-5 transition-transform duration-200 ease-out ${
+          className={`w-[19px] h-[19px] transition-transform duration-200 ease-out ${
             isClapping ? 'scale-125' : 'scale-100 group-hover:scale-110'
           } ${pendingClaps > 0 ? 'text-accent' : 'text-muted-foreground'}`}
         />
