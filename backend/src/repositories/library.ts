@@ -40,8 +40,8 @@ export const libraryRepository = {
           created_at,
           reading_time,
           published_at,
-          clap_count,
-          comment_count,
+          clap_count:claps_count,
+          comment_count:comments_count,
           author:users!author_id (
             id,
             profiles (
@@ -111,8 +111,8 @@ export const libraryRepository = {
           created_at,
           reading_time,
           published_at,
-          clap_count,
-          comment_count,
+          clap_count:claps_count,
+          comment_count:comments_count,
           author:users!author_id (
             id,
             profiles (
