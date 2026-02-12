@@ -164,7 +164,7 @@ export const getTopics = asyncHandler(async (_req: Request, res: Response) => {
  * POST /api/admin/topics - Create topic (editor+)
  */
 export const createTopic = asyncHandler(async (req: Request, res: Response) => {
-  const { name, slug, description, coverUrl } = req.body;
+  const { name, slug, description, coverUrl, parentId } = req.body;
 
   if (!name?.trim() || !slug?.trim()) {
     res.status(400).json({ success: false, error: 'Name and slug are required' });
@@ -175,7 +175,8 @@ export const createTopic = asyncHandler(async (req: Request, res: Response) => {
     name.trim(),
     slug.trim().toLowerCase().replace(/\s+/g, '-'),
     description?.trim(),
-    coverUrl
+    coverUrl,
+    parentId
   );
 
   res.status(201).json({ success: true, data: topic });
@@ -186,13 +187,14 @@ export const createTopic = asyncHandler(async (req: Request, res: Response) => {
  */
 export const updateTopic = asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { name, slug, description, coverUrl } = req.body;
+  const { name, slug, description, coverUrl, parentId } = req.body;
 
   const topic = await topicsRepo.updateTopic(id, {
     name: name?.trim(),
     slug: slug?.trim().toLowerCase().replace(/\s+/g, '-'),
     description: description?.trim(),
     cover_url: coverUrl,
+    parent_id: parentId,
   });
 
   res.json({ success: true, data: topic });
@@ -205,6 +207,27 @@ export const deleteTopic = asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params;
   await topicsRepo.deleteTopic(id);
   res.json({ success: true });
+});
+
+/**
+ * GET /api/admin/stats - Get dashboard stats (author/editor/admin)
+ */
+export const getDashboardStats = asyncHandler(async (req: Request, res: Response) => {
+  const userId = req.user!.id;
+  
+  // Parallel fetch for performance
+  const [postStats, followerCount] = await Promise.all([
+    postsRepo.getAuthorStats(userId),
+    usersRepository.getFollowerCount(userId)
+  ]);
+
+  res.json({
+    success: true,
+    data: {
+      ...postStats,
+      totalFollowers: followerCount
+    }
+  });
 });
 
 // ==================== USER MANAGEMENT (admin only) ====================

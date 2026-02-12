@@ -39,7 +39,18 @@ export default async function HomePage() {
 
   const mainFeedPosts = posts;
   
-  const recommendedTopics = [
+  /* Fetch topics dynamically */
+  let topics: import('@/lib/api').Topic[] = [];
+  try {
+      const topicsList = await import('@/lib/api').then(m => m.getAllTopics());
+      // Filter for root topics only (no parent) and maybe limit to random 7?
+      // For now, let's just show the first 7 root topics
+      topics = topicsList.filter(t => !t.parent_id).slice(0, 10);
+  } catch (err) {
+      console.error('Failed to fetch topics for home page', err);
+  }
+  
+  const recommendedTopics = topics.length > 0 ? topics.map(t => t.name) : [
     'Education', 'Learning', 'Teaching', 'Parenting', 
     'Student Life', 'Study Tips', 'Career'
   ];

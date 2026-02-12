@@ -366,6 +366,7 @@ export async function setPostTopics(postId: string, topicIds: string[]): Promise
     .eq('post_id', postId);
 
   // Add new
+
   if (topicIds.length > 0) {
     const { error } = await supabaseAdmin
       .from('post_topics')
@@ -373,4 +374,33 @@ export async function setPostTopics(postId: string, topicIds: string[]): Promise
 
     if (error) throw error;
   }
+}
+
+export async function getAuthorStats(authorId: string) {
+  const { data, error } = await supabaseAdmin
+    .from('posts_with_stats')
+    .select('status, view_count, clap_count')
+    .eq('author_id', authorId)
+    .is('deleted_at', null);
+
+  if (error) throw error;
+
+  const stats = {
+    totalPosts: 0,
+    publishedPosts: 0,
+    draftPosts: 0,
+    totalViews: 0,
+    totalClaps: 0,
+  };
+
+  (data || []).forEach((post) => {
+    stats.totalPosts++;
+    if (post.status === 'published') stats.publishedPosts++;
+    else if (post.status === 'draft') stats.draftPosts++;
+    
+    stats.totalViews += post.view_count || 0;
+    stats.totalClaps += post.clap_count || 0;
+  });
+
+  return stats;
 }

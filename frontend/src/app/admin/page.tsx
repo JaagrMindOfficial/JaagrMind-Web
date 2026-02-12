@@ -3,38 +3,35 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
-import { FileText, Eye, Heart, TrendingUp, Plus } from 'lucide-react';
+import { FileText, Eye, Heart, TrendingUp, Plus, Users } from 'lucide-react';
+import { getDashboardStats, DashboardStats } from '@/lib/api';
 
-interface Stats {
-  totalPosts: number;
-  publishedPosts: number;
-  draftPosts: number;
-  totalViews: number;
-  totalClaps: number;
-}
+
 
 export default function AdminDashboard() {
   const { user } = useAuth();
-  const [stats, setStats] = useState<Stats>({
+  const [stats, setStats] = useState<DashboardStats>({
     totalPosts: 0,
     publishedPosts: 0,
     draftPosts: 0,
     totalViews: 0,
     totalClaps: 0,
+    totalFollowers: 0,
   });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // TODO: Fetch actual stats from API
-    // For now, show placeholder data
-    setStats({
-      totalPosts: 12,
-      publishedPosts: 8,
-      draftPosts: 4,
-      totalViews: 1234,
-      totalClaps: 567,
-    });
-    setLoading(false);
+    async function loadStats() {
+      try {
+        const data = await getDashboardStats();
+        setStats(data);
+      } catch (error) {
+        console.error('Failed to load dashboard stats:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadStats();
   }, []);
 
   const statCards = [
@@ -68,6 +65,12 @@ export default function AdminDashboard() {
       icon: Heart, 
       color: 'bg-pink-500' 
     },
+    { 
+      label: 'Total Followers', 
+      value: stats.totalFollowers.toLocaleString(), 
+      icon: Users, 
+      color: 'bg-indigo-500' 
+    },
   ];
 
   return (
@@ -91,8 +94,8 @@ export default function AdminDashboard() {
 
       {/* Stats Grid */}
       {loading ? (
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
-          {[...Array(5)].map((_, i) => (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+          {[...Array(6)].map((_, i) => (
             <div key={i} className="bg-input rounded-lg p-4 animate-pulse">
               <div className="h-8 bg-border rounded mb-2" />
               <div className="h-4 bg-border rounded w-1/2" />
@@ -100,19 +103,19 @@ export default function AdminDashboard() {
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
           {statCards.map((stat) => (
             <div 
               key={stat.label}
               className="bg-input rounded-lg p-4 border border-border"
             >
               <div className="flex items-center gap-3">
-                <div className={`w-10 h-10 rounded-lg ${stat.color} flex items-center justify-center`}>
+                <div className={`w-10 h-10 rounded-lg ${stat.color} flex items-center justify-center shrink-0`}>
                   <stat.icon className="w-5 h-5 text-white" />
                 </div>
-                <div>
-                  <p className="text-2xl font-bold">{stat.value}</p>
-                  <p className="text-xs text-muted">{stat.label}</p>
+                <div className="min-w-0">
+                  <p className="text-2xl font-bold truncate">{stat.value}</p>
+                  <p className="text-xs text-muted truncate">{stat.label}</p>
                 </div>
               </div>
             </div>
@@ -132,7 +135,7 @@ export default function AdminDashboard() {
           </div>
           <div className="space-y-3">
             <p className="text-sm text-muted">
-              No posts yet. Create your first post!
+              Check out "Posts" in the sidebar to view your recent work.
             </p>
           </div>
         </div>

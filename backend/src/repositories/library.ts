@@ -9,7 +9,12 @@ export const libraryRepository = {
       .insert({ user_id: userId, post_id: postId });
 
     // Ignore duplicate key error (already saved)
-    if (error && error.code !== '23505') throw error;
+    if (error && error.code !== '23505') {
+       if (error.code === '23503') {
+           throw new Error('Post does not exist');
+       }
+       throw error;
+    }
   },
 
   async unsavePost(userId: string, postId: string) {

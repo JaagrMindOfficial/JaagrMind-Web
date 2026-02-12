@@ -419,6 +419,9 @@ export default function UsersPage() {
               <tr className="text-left text-sm text-muted">
                 <th className="px-4 py-3 font-medium first:rounded-tl-lg">User</th>
                 <th className="px-4 py-3 font-medium">Role</th>
+                <th className="px-4 py-3 font-medium text-center">Posts</th>
+                <th className="px-4 py-3 font-medium text-center">Views</th>
+                <th className="px-4 py-3 font-medium text-center">Followers</th>
                 <th className="px-4 py-3 font-medium">Joined</th>
                 <th className="px-4 py-3 font-medium w-16 last:rounded-tr-lg"></th>
               </tr>
@@ -426,6 +429,8 @@ export default function UsersPage() {
             <tbody className="divide-y divide-border">
               {filteredUsers.map((user) => {
                 const RoleIcon = roleIcons[user.role] || User;
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const stats = user as any; // Cast to access extra fields from view
                 return (
                   <tr key={user.id} className="hover:bg-border/20 last:first:rounded-bl-lg last:last:rounded-br-lg">
                     <td className="px-4 py-3">
@@ -448,6 +453,15 @@ export default function UsersPage() {
                         <RoleIcon className="w-3 h-3" />
                         {user.role}
                       </span>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-center">
+                      {stats.post_count || 0}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-center">
+                      {(stats.total_views || 0).toLocaleString()}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-center">
+                      {(stats.follower_count || 0).toLocaleString()}
                     </td>
                     <td className="px-4 py-3 text-sm text-muted">
                       {format(new Date(user.created_at), 'MMM d, yyyy')}

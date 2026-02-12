@@ -26,11 +26,12 @@ export async function createTopic(
   name: string,
   slug: string,
   description?: string,
-  coverUrl?: string
+  coverUrl?: string,
+  parentId?: string | null
 ): Promise<Topic> {
   const { data, error } = await supabaseAdmin
     .from('topics')
-    .insert({ name, slug, description, cover_url: coverUrl })
+    .insert({ name, slug, description, cover_url: coverUrl, parent_id: parentId })
     .select()
     .single();
 
@@ -49,6 +50,7 @@ export async function updateTopic(
       slug: updates.slug,
       description: updates.description,
       cover_url: updates.cover_url,
+      parent_id: updates.parent_id,
     })
     .eq('id', id)
     .select()

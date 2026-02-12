@@ -139,6 +139,8 @@ export const addClaps = asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params;
   const { count = 1, sessionId } = req.body;
 
+  console.log(`[Posts] addClaps for post ${id}, count: ${count}, user: ${req.user?.id}, session: ${sessionId}`);
+
   const clap = await engagementRepo.addClap(
     id,
     req.user?.id || null,
@@ -147,6 +149,7 @@ export const addClaps = asyncHandler(async (req: Request, res: Response) => {
   );
 
   const totalClaps = await engagementRepo.getPostClaps(id);
+  console.log(`[Posts] addClaps success. New total: ${totalClaps}`);
 
   res.json({ success: true, data: { clap, totalClaps } });
 });

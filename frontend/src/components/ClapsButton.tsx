@@ -24,13 +24,23 @@ export function ClapsButton({ postId, initialCount = 0 }: ClapsButtonProps) {
     const timer = setTimeout(async () => {
       try {
         const sessionId = getSessionId();
+        console.log('[ClapsButton] Submitting claps:', pendingClaps, 'for post:', postId, 'session:', sessionId);
         const result = await addClaps(postId, pendingClaps, sessionId);
+        console.log('[ClapsButton] Result:', result);
         if (result) {
           setCount(result.totalClaps);
+        } else {
+           console.error('[ClapsButton] Failed to submit claps (result is null)');
+           // Revert the optimistic update: subtract the pending amount from the displayed count
+           setCount(prev => Math.max(0, prev - pendingClaps));
         }
+        // Always clear pending, so we don't retry forever or leave a stuck "+X" badge
         setPendingClaps(0);
       } catch (error) {
         console.error('Failed to submit claps:', error);
+        // Revert the optimistic update
+        setCount(prev => Math.max(0, prev - pendingClaps));
+        setPendingClaps(0);
       }
     }, 500);
 

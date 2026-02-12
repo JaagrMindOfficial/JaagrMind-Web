@@ -21,18 +21,21 @@ export const usersRepository = {
   async getAll(page = 1, limit = 20, search?: string) {
     const offset = (page - 1) * limit;
 
-    let query = supabase
-      .from('users')
+    let query = supabaseAdmin
+      .from('users_with_stats') // Use the view
       .select(`
         *,
-        profiles(username, display_name, avatar_url)
+        post_count,
+        total_views,
+        total_claps,
+        follower_count
       `, { count: 'exact' })
       .neq('role', 'reader') // Exclude general readers
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);
 
     if (search) {
-      query = query.or(`email.ilike.%${search}%,profiles.username.ilike.%${search}%`);
+      query = query.or(`email.ilike.%${search}%,username.ilike.%${search}%,display_name.ilike.%${search}%`);
     }
 
     const { data, error, count } = await query;

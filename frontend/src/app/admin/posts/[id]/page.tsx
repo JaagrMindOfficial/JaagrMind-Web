@@ -48,7 +48,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     topic_ids: [],
   });
 
-  const [topics, setTopics] = useState<{ value: string; label: string }[]>([]);
+  const [topics, setTopics] = useState<{ value: string; label: string; parentId?: string }[]>([]);
 
   useEffect(() => {
     fetchPost();
@@ -62,7 +62,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       .then(data => {
         if (data.success) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          setTopics(data.data.map((t: any) => ({ value: t.id, label: t.name })));
+          setTopics(data.data.map((t: any) => ({ value: t.id, label: t.name, parentId: t.parent_id })));
         }
       })
       .catch(err => console.error('Failed to fetch topics', err));
@@ -326,15 +326,53 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
           )}
         </div>
 
-        {/* Topics */}
-        <div className="mb-6">
-          <MultiSelect
-            label="Topics"
-            options={topics}
-            value={post.topic_ids || []}
-            onChange={(selected) => setPost(prev => ({ ...prev, topic_ids: selected }))}
-            placeholder="Select topics..."
-          />
+        {/* Topics & Sub-topics */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          {/* Root Topics */}
+          <div>
+            <MultiSelect
+              label="Topics"
+              options={topics.filter(t => !t.parentId)} // Show only roots
+              value={post.topic_ids.filter(id => topics.find(t => t.value === id && !t.parentId))}
+              onChange={(selectedRoots) => {
+                // Keep existing sub-topics, replace roots
+                const currentSubIds = post.topic_ids.filter(id => topics.find(t => t.value === id && t.parentId));
+                // Optional: Filter out sub-topics whose parents are no longer selected? 
+                // For now, let's keep them to avoid accidental data loss, or we can filter them.
+                // Better UX: Filter out orphans.
+                const validSubIds = currentSubIds.filter(subId => {
+                   const subTopic = topics.find(t => t.value === subId);
+                   return subTopic && subTopic.parentId && selectedRoots.includes(subTopic.parentId);
+                });
+                
+                setPost(prev => ({ ...prev, topic_ids: [...selectedRoots, ...validSubIds] }));
+              }}
+              placeholder="Select topics..."
+            />
+          </div>
+
+          {/* Sub-topics */}
+          <div>
+            <MultiSelect
+              label="Sub-topics"
+              options={topics.filter(t => {
+                // Show sub-topics whose parent is selected
+                const rootIds = post.topic_ids.filter(id => topics.find(r => r.value === id && !r.parentId));
+                return t.parentId && rootIds.includes(t.parentId);
+              })}
+              value={post.topic_ids.filter(id => topics.find(t => t.value === id && t.parentId))}
+              onChange={(selectedSubs) => {
+                // Keep existing roots, replace subs
+                const currentRootIds = post.topic_ids.filter(id => topics.find(t => t.value === id && !t.parentId));
+                setPost(prev => ({ ...prev, topic_ids: [...currentRootIds, ...selectedSubs] }));
+              }}
+              placeholder={
+                post.topic_ids.some(id => topics.find(t => t.value === id && !t.parentId))
+                  ? "Select sub-topics..."
+                  : "Select a topic first"
+              }
+            />
+          </div>
         </div>
 
         {/* Title */}

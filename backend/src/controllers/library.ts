@@ -7,13 +7,16 @@ import { Request, Response } from 'express';
 import { asyncHandler } from '../middleware/error.js';
 import { libraryRepository } from '../repositories/library.js';
 
+import { ApiError } from '../middleware/error.js';
+
 export const savePost = asyncHandler(async (req: Request, res: Response) => {
-  const userId = req.user!.id; // Auth middleware ensures this
+  const userId = req.user!.id; 
   const { postId } = req.body;
 
+  console.log(`[Library] savePost called by ${userId}. Body:`, req.body);
+
   if (!postId) {
-    res.status(400);
-    throw new Error('Post ID is required');
+    throw new ApiError('Post ID is required', 400);
   }
 
   await libraryRepository.savePost(userId, postId);

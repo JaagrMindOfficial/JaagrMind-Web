@@ -8,6 +8,9 @@ const router = Router();
 router.use(authenticate);
 router.use(requireAuth);
 
+// Dashboard Stats
+router.get('/stats', requireMinRole('author'), adminController.getDashboardStats);
+
 // Posts (author+)
 router.get('/posts', requireMinRole('author'), adminController.getPosts);
 router.post('/posts', requireMinRole('author'), adminController.createPost);

@@ -506,3 +506,24 @@ export async function getAllTopics(): Promise<Topic[]> {
   return result.success ? result.data || [] : [];
 }
 
+export interface DashboardStats {
+  totalPosts: number;
+  publishedPosts: number;
+  draftPosts: number;
+  totalViews: number;
+  totalClaps: number;
+  totalFollowers: number;
+}
+
+export async function getDashboardStats(): Promise<DashboardStats> {
+  const result = await apiFetch<DashboardStats>('/admin/stats');
+  return result.data || {
+    totalPosts: 0,
+    publishedPosts: 0,
+    draftPosts: 0,
+    totalViews: 0,
+    totalClaps: 0,
+    totalFollowers: 0
+  };
+}
+

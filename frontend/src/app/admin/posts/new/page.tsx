@@ -27,7 +27,7 @@ export default function NewPostPage() {
     topic_ids: [] as string[],
   });
 
-  const [topics, setTopics] = useState<{ value: string; label: string }[]>([]);
+  const [topics, setTopics] = useState<{ value: string; label: string; parentId?: string }[]>([]);
   const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
 
   // Fetch topics
@@ -36,7 +36,7 @@ export default function NewPostPage() {
       .then(res => res.json())
       .then(data => {
         if (data.success) {
-          setTopics(data.data.map((t: any) => ({ value: t.id, label: t.name })));
+          setTopics(data.data.map((t: any) => ({ value: t.id, label: t.name, parentId: t.parent_id })));
         }
       })
       .catch(err => console.error('Failed to fetch topics', err));
@@ -199,15 +199,46 @@ export default function NewPostPage() {
           )}
         </div>
 
-        {/* Topics */}
-        <div className="mb-6">
-          <MultiSelect
-            label="Topics"
-            options={topics}
-            value={selectedTopics}
-            onChange={setSelectedTopics}
-            placeholder="Select topics..."
-          />
+        {/* Topics & Sub-topics */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          {/* Root Topics */}
+          <div>
+            <MultiSelect
+              label="Topics"
+              options={topics.filter(t => !t.parentId)}
+              value={selectedTopics.filter(id => topics.find(t => t.value === id && !t.parentId))}
+              onChange={(selectedRoots) => {
+                const currentSubIds = selectedTopics.filter(id => topics.find(t => t.value === id && t.parentId));
+                const validSubIds = currentSubIds.filter(subId => {
+                   const subTopic = topics.find(t => t.value === subId);
+                   return subTopic && subTopic.parentId && selectedRoots.includes(subTopic.parentId);
+                });
+                setSelectedTopics([...selectedRoots, ...validSubIds]);
+              }}
+              placeholder="Select topics..."
+            />
+          </div>
+
+          {/* Sub-topics */}
+          <div>
+            <MultiSelect
+              label="Sub-topics"
+              options={topics.filter(t => {
+                const rootIds = selectedTopics.filter(id => topics.find(r => r.value === id && !r.parentId));
+                return t.parentId && rootIds.includes(t.parentId);
+              })}
+              value={selectedTopics.filter(id => topics.find(t => t.value === id && t.parentId))}
+              onChange={(selectedSubs) => {
+                const currentRootIds = selectedTopics.filter(id => topics.find(t => t.value === id && !t.parentId));
+                setSelectedTopics([...currentRootIds, ...selectedSubs]);
+              }}
+              placeholder={
+                selectedTopics.some(id => topics.find(t => t.value === id && !t.parentId))
+                  ? "Select sub-topics..."
+                  : "Select a topic first"
+              }
+            />
+          </div>
         </div>
 
         {/* Title */}
