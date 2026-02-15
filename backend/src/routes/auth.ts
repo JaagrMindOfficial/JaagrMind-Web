@@ -2,6 +2,8 @@ import { Router, Request, Response } from 'express';
 import { supabaseAdmin } from '../config/supabase.js';
 import { asyncHandler } from '../middleware/error.js';
 import { authenticate, requireAuth } from '../middleware/auth.js';
+import { sendEmail } from '../jobs/queues.js';
+import { emailTemplates } from '../services/email.js';
 
 const router = Router();
 
@@ -35,12 +37,41 @@ router.post('/signup', asyncHandler(async (req: Request, res: Response) => {
   const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
     email,
     password,
-    email_confirm: true, // Auto-confirm for development (set to false in production)
+    email_confirm: false, // Enable verification emails (Supabase sends them)
   });
 
   if (authError) {
     res.status(400).json({ success: false, error: authError.message });
     return;
+  }
+
+  try {
+    // Generate verification link manually since we are using admin API
+    const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
+      type: 'signup',
+      email,
+      password,
+      options: {
+        redirectTo: `${process.env.FRONTEND_URL}/verified`,
+      },
+    });
+
+    if (linkError) throw linkError;
+
+    // Send verification email via our worker/Resend
+    if (linkData.properties?.action_link) {
+      await sendEmail({
+        type: 'verification',
+        to: email,
+        subject: emailTemplates.verification(linkData.properties.action_link).subject,
+        html: emailTemplates.verification(linkData.properties.action_link).html,
+        text: emailTemplates.verification(linkData.properties.action_link).text,
+      });
+    }
+  } catch (err) {
+    // If email fails, we log it but don't fail the registration 
+    // (User can request resend later)
+    console.error('Failed to send verification email:', err);
   }
 
   // Create user in our users table

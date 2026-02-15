@@ -17,6 +17,8 @@ import mediaRoutes from './routes/media.js';
 import topicsRoutes from './routes/topics.js';
 import usersRoutes from './routes/users.js';
 import libraryRoutes from './routes/library.js';
+import { createEmailWorker } from './jobs/emailWorker.js';
+import { useQueue } from './jobs/queues.js';
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -58,6 +60,14 @@ app.use(errorHandler);
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
   console.log(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
+  
+  // Start workers
+  if (useQueue) {
+      createEmailWorker();
+      console.log('📧 Email worker started (BullMQ)');
+  } else {
+      console.log('⚠️ Redis not available. Email worker disabled (Using direct send).');
+  }
 });
 
 export default app;
